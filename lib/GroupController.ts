@@ -1,3 +1,10 @@
+/**
+ * GroupController.ts — Campus Connect: Study Groups
+ * 
+ * Business logic controller for study group operations.
+ * Handles validation and orchestration of study group creation.
+ */
+
 import { StudyGroup } from './StudyGroup'
 import { DBMgr } from './DBMgr'
 import { Msg } from './Msg'
