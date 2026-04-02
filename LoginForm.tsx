@@ -14,8 +14,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../services/authService';
-import { supabase } from '../supabaseClient';
+import { login } from './authService';
+import { supabase } from './supabaseClient';
 
 // ─── Validation (mirrors authService.ts guards for instant UI feedback) ────────
 
