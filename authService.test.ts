@@ -162,8 +162,8 @@ import {
   validateToken,
   isValidEmail,
   isValidPassword,
-} from './authService';
-import { logout, isValidAuthId } from './authService1';
+} from './login';
+import { logout, isValidAuthId } from './logout';
 
 // ─── Mock Supabase ─────────────────────────────────────────────────────────────
 //

@@ -12,7 +12,7 @@
  * Backed by Supabase Auth.
  */
 
-import { supabase } from '../supabaseClient';
+import { supabase } from './supabaseClient';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
