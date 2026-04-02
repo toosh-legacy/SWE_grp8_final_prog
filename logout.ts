@@ -10,7 +10,7 @@
  * Backed by Supabase Auth (`signOut`).
  */
 
-import { supabase } from '../supabaseClient';
+import { supabase } from './supabaseClient';
 
 // ─── Validation Helpers ────────────────────────────────────────────────────────
 
