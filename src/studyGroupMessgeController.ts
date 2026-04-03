@@ -3,17 +3,17 @@ import type { JoinMessage } from "./types/join-message";
 import { UserChatConnection } from "./userMessageConnection";
 
 
-function isValidStudyGroup(studyGroupId: string)
-{
-    if (studyGroupId === "math" || studyGroupId === "science")
-    {
-        return true;
-    }
-}
 
 export class StudyGroupMessageController
 {
     activeUserConnections: UserChatConnection[] = [];
+
+    static isValidStudyGroup(studyGroupId: string)
+    {
+        if (studyGroupId === "math" || studyGroupId === "science") {
+            return true;
+        }
+    }
 
     constructor(port: number)
     {
@@ -32,20 +32,23 @@ export class StudyGroupMessageController
 
                     if (typeof handshakeMessage === "object" && typeof handshakeMessage.userId === "string" && typeof handshakeMessage.name === "string" && typeof handshakeMessage.studyGroupId === "string")
                     {
-                        if (isValidStudyGroup(handshakeMessage.studyGroupId))
+                        if (StudyGroupMessageController.isValidStudyGroup(handshakeMessage.studyGroupId))
                         {
                             this.registerUserConnection(socket, handshakeMessage.name, handshakeMessage.userId, handshakeMessage.studyGroupId);
+                            throw new Error("INVALID_MESSAGE");
                         }
                         else
                         {
                             // Study group does not exist
                             socket.close();
+                            throw new Error("INVALID_MESSAGE_FORMAT");
                         }
                     }
                     else
                     {
                         // Malformed message
                         socket.close();
+                        throw new Error("INVALID_STUDY_GROUP");
                     }
                 }
                 catch

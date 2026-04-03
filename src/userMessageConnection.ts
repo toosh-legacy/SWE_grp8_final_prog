@@ -18,11 +18,6 @@ export class UserChatConnection
         this.studyGroupId = studyGroupId;
         this.studyGroupMessageController = studyGroupMessageController;
 
-        this.registerEvents();
-    }
-
-    private registerEvents()
-    {
         this.socket.on("message", (data) =>
         {
             this.handleMessage(data.toString());
@@ -56,6 +51,10 @@ export class UserChatConnection
         switch (message.type)
         {
             case "chat":
+                if (typeof message.content !== "string") {
+                    throw new Error("INVALID_CHAT_CONTENT");
+                }
+
                 this.studyGroupMessageController.broadcastMessage(
                     this.studyGroupId,
                     this,
@@ -69,12 +68,17 @@ export class UserChatConnection
                 break;
 
             default:
-                console.warn("Unknown message type:", message.type);
+                throw new Error("UNKNOWN_MESSAGE_TYPE");
         }
     }
 
     public send(data: any)
     {
+
+        if (this.socket.readyState !== WebSocket.OPEN) {
+            throw new Error("SOCKET_NOT_OPEN");
+        }
+        
         if (this.socket.readyState === WebSocket.OPEN)
         {
             this.socket.send(JSON.stringify(data));
