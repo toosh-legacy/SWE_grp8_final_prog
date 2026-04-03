@@ -56,7 +56,16 @@ export class UserChatConnection
         switch (message.type)
         {
             case "chat":
-                this.studyGroupMessageController.broadcastMessage(this.studyGroupId, this, message);
+                this.studyGroupMessageController.broadcastMessage(
+                    this.studyGroupId,
+                    this,
+                    {
+                        type: "chat",
+                        content: message.content,
+                        sender: this.name,
+                        studyGroupId: this.studyGroupId
+                    }
+                );
                 break;
 
             default:
