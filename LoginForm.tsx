@@ -126,12 +126,18 @@ export default function LoginForm() {
 
   return (
     <div className="login-container">
+      <div className="login-marketing">
+        <div className="brand-pill">Campus Connect</div>
+        <p className="marketing-copy">
+          Connect with friends and other students. Be part of study groups to help you get
+          through your courses.
+        </p>
+      </div>
       <div className="login-card">
 
         {/* Header */}
         <div className="login-header">
-          <h1 className="app-title">Campus Connect</h1>
-          <p className="app-subtitle">Sign in to your account</p>
+          <h1 className="app-title">Log In</h1>
         </div>
 
         {/* Server-level auth error banner */}
@@ -145,13 +151,13 @@ export default function LoginForm() {
         <form onSubmit={handleSubmit} noValidate>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Username/Email</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-              placeholder="you@university.edu"
+              placeholder="Value"
               autoComplete="email"
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? 'email-error' : undefined}
@@ -170,7 +176,7 @@ export default function LoginForm() {
               type="password"
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Value"
               autoComplete="current-password"
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? 'password-error' : undefined}
@@ -207,7 +213,7 @@ export default function LoginForm() {
             aria-label="Sign in with Google"
           >
             <GoogleIcon />
-            Google
+            Continue via Google
           </button>
 
           <button
@@ -218,14 +224,13 @@ export default function LoginForm() {
             aria-label="Sign in with Discord"
           >
             <DiscordIcon />
-            Discord
+            Continue via Discord
           </button>
         </div>
 
-        {/* Register link */}
-        <p className="register-link">
-          Don't have an account?{' '}
-          <a href="/register">Sign up</a>
+        <p className="register-link-row">
+          <a href="/forgot-password">Forgot Password?</a>
+          <a href="/register">Create Account</a>
         </p>
 
       </div>
