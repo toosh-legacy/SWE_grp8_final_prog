@@ -6,6 +6,10 @@ import { EMAIL_VERIFICATION_CODE_LENGTH } from "@/lib/settings/constants";
 
 export default function AccountSettingsPage() {
   const { settings, update } = useSettings();
+  const verificationCodePattern = new RegExp(
+    `^\\d{${EMAIL_VERIFICATION_CODE_LENGTH}}$`,
+  );
+  const verificationCodePlaceholder = "0".repeat(EMAIL_VERIFICATION_CODE_LENGTH);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -63,14 +67,14 @@ export default function AccountSettingsPage() {
     setCode("");
     setEmailMessage({
       type: "ok",
-      text: "Demo: we didn’t send a real email. Enter any 6-digit code to confirm.",
+      text: `Demo: we didn’t send a real email. Enter any ${EMAIL_VERIFICATION_CODE_LENGTH}-digit code to confirm.`,
     });
   }
 
   function confirmEmailWithCode(e: React.FormEvent) {
     e.preventDefault();
     setEmailMessage(null);
-    if (!/^\d{6}$/.test(code)) {
+    if (!verificationCodePattern.test(code)) {
       setEmailMessage({
         type: "err",
         text: `Enter a ${EMAIL_VERIFICATION_CODE_LENGTH}-digit verification code.`,
@@ -189,7 +193,7 @@ export default function AccountSettingsPage() {
                 maxLength={EMAIL_VERIFICATION_CODE_LENGTH}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="000000"
+                placeholder={verificationCodePlaceholder}
                 className="rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 tracking-widest dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
               />
             </label>
