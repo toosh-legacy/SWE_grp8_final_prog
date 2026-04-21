@@ -29,6 +29,12 @@ const cards = [
 
 export default function SettingsHomePage() {
   const { settings, ready, reset } = useSettings();
+  function handleReset() {
+    if (!window.confirm("Reset all settings on this browser back to defaults?")) {
+      return;
+    }
+    reset();
+  }
 
   return (
     <>
@@ -94,7 +100,7 @@ export default function SettingsHomePage() {
         </p>
         <button
           type="button"
-          onClick={reset}
+          onClick={handleReset}
           className="mt-4 rounded-full border border-red-600 px-5 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-400 dark:text-red-200 dark:hover:bg-red-900/40"
         >
           Reset all settings

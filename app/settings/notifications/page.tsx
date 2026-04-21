@@ -11,18 +11,20 @@ type RowProps = {
 };
 
 function ToggleRow({ id, title, description, checked, onChange }: RowProps) {
+  const titleId = `${id}-title`;
   return (
     <div className="flex items-start justify-between gap-4 border-b border-zinc-100 py-4 last:border-0 dark:border-zinc-800">
       <div>
-        <label htmlFor={id} className="font-medium text-zinc-900 dark:text-zinc-100">
+        <p id={titleId} className="font-medium text-zinc-900 dark:text-zinc-100">
           {title}
-        </label>
+        </p>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
       </div>
       <button
         id={id}
         type="button"
         role="switch"
+        aria-labelledby={titleId}
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${
