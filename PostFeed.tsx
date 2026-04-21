@@ -6,10 +6,10 @@
  * Calls postService and eventService from the service layer.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import type { Post } from '../types';
-import type { FeedCategory } from '../types';
-import { getFeedByCategory, searchFeed, likePost } from '../services/postService';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { FormEvent } from 'react';
+import type { Post, FeedCategory } from './index';
+import { getFeedByCategory, searchFeed, likePost } from './postService';
 import CreatePostForm from './CreatePostForm';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
 
   // ── Search ───────────────────────────────────────────────────────────────────
 
-  async function handleSearch(e: React.FormEvent) {
+  async function handleSearch(e: FormEvent) {
     e.preventDefault();
     if (!searchQuery.trim()) {
       setIsSearching(false);

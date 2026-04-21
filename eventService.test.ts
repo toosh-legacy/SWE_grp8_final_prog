@@ -135,11 +135,11 @@ import {
 
 // ─── Supabase Mock ─────────────────────────────────────────────────────────────
 
-vi.mock('../supabaseClient', () => ({
+vi.mock('./supabaseClient', () => ({
   supabase: { from: vi.fn() },
 }));
 
-import { supabase } from '../supabaseClient';
+import { supabase } from './supabaseClient';
 
 /** Chainable, awaitable Supabase mock — same helper pattern as postService.test.ts */
 function makeMock(result: { data?: any; error?: any }) {

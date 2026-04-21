@@ -177,11 +177,11 @@ import {
 
 // ─── Supabase Mock ─────────────────────────────────────────────────────────────
 
-vi.mock('../supabaseClient', () => ({
+vi.mock('./supabaseClient', () => ({
   supabase: { from: vi.fn() },
 }));
 
-import { supabase } from '../supabaseClient';
+import { supabase } from './supabaseClient';
 
 /**
  * Builds a Supabase-like chainable mock that:
