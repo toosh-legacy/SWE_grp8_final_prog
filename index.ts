@@ -1,12 +1,20 @@
 /**
- * types/index.ts — Campus Connect
+ * index.ts — Campus Connect
  * Shared TypeScript interfaces derived from the Design Class Diagram (DCD).
- *
- * NOTE: The Student interface lives in src/services/login.ts (auth subsystem).
- *       Import it from there: import type { Student } from '../services/login'
- *
- * All other attribute names and types match the DCD exactly.
+ * All attribute names and types match the DCD exactly.
  */
+
+// ─── Student (DCD: Student class / Auth subsystem) ────────────────────────────
+export interface Student {
+  studentId: string;
+  name: string;
+  email: string;
+  campus: string;
+  major: string;
+  bio: string;
+  avatarUrl: string;
+  passwordHash: string;
+}
 
 // ─── Feed Category (FR8a) ──────────────────────────────────────────────────────
 export type FeedCategory = 'general' | 'announcement' | 'event';
