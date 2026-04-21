@@ -11,8 +11,8 @@
  * Covers FR18 (RSVP), FR8 (events as a feed type).
  */
 
-import { supabase } from '../supabaseClient';
-import type { CampusEvent } from '../types';
+import { supabase } from './supabaseClient';
+import type { CampusEvent } from './index';
 import type { Student } from './login';
 
 // ─── Validation Helpers (exported for testing) ────────────────────────────────

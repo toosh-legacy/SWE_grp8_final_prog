@@ -7,10 +7,11 @@
  */
 
 import { useState } from 'react';
-import type { Post, FeedCategory } from '../types';
-import { createPost, MAX_POST_LENGTH } from '../services/postService';
-import { publishEvent } from '../services/eventService';
-import type { CampusEvent } from '../types';
+import type { FormEvent } from 'react';
+import type { Post, FeedCategory, CampusEvent } from './index';
+import { createPost, MAX_POST_LENGTH } from './postService';
+import { publishEvent } from './eventService';
+
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ export default function CreatePostForm({
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
 

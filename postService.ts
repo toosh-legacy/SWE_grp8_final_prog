@@ -14,9 +14,9 @@
  *   + searchFeed(query, category?)             : Post[]    — FR8b
  */
 
-import { supabase } from '../supabaseClient';
-import type { Post, Comment, FeedCategory } from '../types';
-import { VALID_FEED_CATEGORIES } from '../types';
+import { supabase } from './supabaseClient';
+import type { Post, Comment, FeedCategory } from './index';
+import { VALID_FEED_CATEGORIES } from './index';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 export const MAX_POST_LENGTH = 250; // FR8: max 250 characters
