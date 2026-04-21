@@ -13,7 +13,7 @@
 
 import { supabase } from './supabaseClient';
 import type { CampusEvent } from './index';
-import type { Student } from './login';
+import type { Student } from './index';
 
 // ─── Validation Helpers (exported for testing) ────────────────────────────────
 
