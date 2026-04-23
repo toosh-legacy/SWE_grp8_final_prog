@@ -35,9 +35,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     startTransition(() => {
       setSettings(loaded);
       setReady(true);
-      setTheme(loaded.theme);
     });
-  }, [setTheme]);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    setTheme(settings.theme);
+  }, [ready, settings.theme, setTheme]);
 
   const update = useCallback(
     (patch: Partial<UserSettings>) => {
