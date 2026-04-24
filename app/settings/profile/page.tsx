@@ -11,9 +11,8 @@ export default function ProfileSettingsPage() {
   const [imageError, setImageError] = useState<string | null>(null);
   const [savedHint, setSavedHint] = useState(false);
   const mountedRef = useRef(true);
-  const savedHintTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(
-    null,
-  );
+  // Browser timers are numeric IDs; `NodeJS.Timeout` from Node types does not match `window.setTimeout`.
+  const savedHintTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
