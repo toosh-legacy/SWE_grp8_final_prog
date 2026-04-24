@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSettings } from "@/components/settings/settings-provider";
 import { EMAIL_VERIFICATION_CODE_LENGTH } from "@/lib/settings/constants";
+import { validateAccountPasswordForm } from "@/lib/settings/password-validation";
 
 export default function AccountSettingsPage() {
   const { settings, update } = useSettings();
@@ -31,24 +32,9 @@ export default function AccountSettingsPage() {
   function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPasswordMessage(null);
-    if (newPassword.length < 8) {
-      setPasswordMessage({
-        type: "err",
-        text: "New password must be at least 8 characters.",
-      });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage({
-        type: "err",
-        text: "New password and confirmation do not match.",
-      });
-      return;
-    }
-    setPasswordMessage({
-      type: "ok",
-      text: "Password updated (demo only — connect a real auth API in production).",
-    });
+    const result = validateAccountPasswordForm(newPassword, confirmPassword);
+    setPasswordMessage(result);
+    if (result.type === "err") return;
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
