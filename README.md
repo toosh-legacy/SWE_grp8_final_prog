@@ -1,5 +1,5 @@
 # SWE_grp8_final_prog
-
-To test the program, do the following:
+ run 'npm install' to download dependencies  
+ amd tjem tp test the program, do the following:
 npm install 
 npm test
