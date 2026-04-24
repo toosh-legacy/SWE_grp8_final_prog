@@ -1,3 +1,8 @@
+import {
+  DEFAULT_QUIET_HOURS_END,
+  DEFAULT_QUIET_HOURS_START,
+} from "./clock-time";
+
 export type StudyMode = "focus" | "group" | "review";
 
 export type ThemePreference = "light" | "dark" | "system";
@@ -15,6 +20,10 @@ export interface UserSettings {
   notifyGroupActivity: boolean;
   notifyCampusAnnouncements: boolean;
   quietHoursEnabled: boolean;
+  /** Local time `HH:MM` (24h) when quiet hours begin. */
+  quietHoursStart: string;
+  /** Local time `HH:MM` (24h) when quiet hours end. May be “before” start (overnight window). */
+  quietHoursEnd: string;
 }
 
 export const defaultUserSettings: UserSettings = {
@@ -30,4 +39,6 @@ export const defaultUserSettings: UserSettings = {
   notifyGroupActivity: true,
   notifyCampusAnnouncements: true,
   quietHoursEnabled: false,
+  quietHoursStart: DEFAULT_QUIET_HOURS_START,
+  quietHoursEnd: DEFAULT_QUIET_HOURS_END,
 };

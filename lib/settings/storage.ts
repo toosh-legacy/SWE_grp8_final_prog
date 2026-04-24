@@ -1,3 +1,4 @@
+import { parseStoredHHMM } from "./clock-time";
 import { SETTINGS_STORAGE_KEY } from "./constants";
 import { defaultUserSettings, type UserSettings } from "./types";
 
@@ -48,6 +49,14 @@ function mergeSettings(raw: unknown): UserSettings {
       typeof o.quietHoursEnabled === "boolean"
         ? o.quietHoursEnabled
         : defaultUserSettings.quietHoursEnabled,
+    quietHoursStart: parseStoredHHMM(
+      o.quietHoursStart,
+      defaultUserSettings.quietHoursStart,
+    ),
+    quietHoursEnd: parseStoredHHMM(
+      o.quietHoursEnd,
+      defaultUserSettings.quietHoursEnd,
+    ),
   };
 }
 

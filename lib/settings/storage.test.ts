@@ -30,7 +30,7 @@
  * FIG S2 - TEST CASE SCENARIOS
  * ---------------------------------------------------------------------------
  *
- * loadSettings() - 5 scenarios
+ * loadSettings() - 6 scenarios
  * +------+-------------------------------------------------------------------+
  * | TC # | Scenario -> Expected Output                                       |
  * +------+-------------------------------------------------------------------+
@@ -39,6 +39,7 @@
  * | LS3  | valid partial payload -> merges with defaults                     |
  * | LS4  | malformed JSON -> returns defaultUserSettings                     |
  * | LS5  | wrong field types -> ignores invalid fields, keeps valid values   |
+ * | LS6  | invalid quiet time strings in JSON -> use defaults for those     |
  * +------+-------------------------------------------------------------------+
  *
  * saveSettings() - 2 scenarios
@@ -140,6 +141,20 @@ describe("loadSettings()", () => {
     expect(result.notifyStudyReminders).toBe(defaultUserSettings.notifyStudyReminders);
     expect(result.studyMode).toBe("group");
     expect(result.displayName).toBe("Alex");
+  });
+
+  it("LS6 | invalid quiet time strings in storage -> fall back to defaults", () => {
+    setWindow(
+      makeWindowMock(
+        JSON.stringify({
+          quietHoursStart: "25:00",
+          quietHoursEnd: "8:00",
+        }),
+      ),
+    );
+    const result = loadSettings();
+    expect(result.quietHoursStart).toBe(defaultUserSettings.quietHoursStart);
+    expect(result.quietHoursEnd).toBe(defaultUserSettings.quietHoursEnd);
   });
 });
 
