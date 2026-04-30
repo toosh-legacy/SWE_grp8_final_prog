@@ -13,7 +13,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { login } from './login';
 import { supabase } from './supabaseClient';
 
@@ -40,6 +40,8 @@ type OAuthProvider = 'google' | 'discord';
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const signupSuccess = searchParams.get('registered') === '1';
 
   // Form state
   const [email, setEmail]       = useState<string>('');
@@ -140,6 +142,14 @@ export default function LoginForm() {
           <h1 className="app-title">Log In</h1>
         </div>
 
+        {/* After signup without active session (e.g. email confirmation required) */}
+        {signupSuccess && (
+          <div className="success-banner" role="status">
+            Your account was created in Supabase. If your project requires email
+            confirmation, check your inbox, then sign in below.
+          </div>
+        )}
+
         {/* Server-level auth error banner */}
         {authError && (
           <div className="error-banner" role="alert">
@@ -229,8 +239,8 @@ export default function LoginForm() {
         </div>
 
         <p className="register-link-row">
-          <a href="/forgot-password">Forgot Password?</a>
-          <a href="/register">Create Account</a>
+          <Link to="/forgot-password">Forgot Password?</Link>
+          <Link to="/register">Create Account</Link>
         </p>
 
       </div>

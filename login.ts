@@ -97,9 +97,34 @@ export async function login(
  * Post-condition: Creates a new account; returns a Student-shaped object.
  *                 Throws an Error on duplicate email or validation failure.
  */
+/** Optional signup profile stored in Auth user metadata (`user_metadata`). */
+export interface RegisterProfile {
+  username?: string;
+  campus?: string;
+}
+
+function signupOriginLoginUrl(): string | undefined {
+  if (typeof globalThis === 'undefined' || !('location' in globalThis)) return undefined;
+  const origin = (globalThis as unknown as Window).location?.origin;
+  if (!origin || origin === 'null') return undefined;
+  return `${origin}/login`;
+}
+
+function looksLikeDuplicateSignupError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes('already registered') ||
+    m.includes('already been registered') ||
+    m.includes('user already registered') ||
+    (m.includes('email') && (m.includes('already') || m.includes('duplicate'))) ||
+    m.includes('unique') && m.includes('violation')
+  );
+}
+
 export async function register(
   email: string | null | undefined,
   pw: string | null | undefined,
+  profile?: RegisterProfile | null,
 ): Promise<Student> {
   if (!isValidEmail(email)) {
     throw new Error('INVALID_EMAIL: Email must be a valid email address.');
@@ -108,24 +133,45 @@ export async function register(
     throw new Error('INVALID_PASSWORD: Password must be at least 8 characters.');
   }
 
+  const username = profile?.username?.trim() ?? '';
+  const campus = profile?.campus?.trim() ?? '';
+
+  const redirectTo = signupOriginLoginUrl();
   const { data, error } = await supabase.auth.signUp({
     email: (email as string).trim(),
     password: pw as string,
+    options: {
+      ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
+      ...(username || campus
+        ? {
+            data: {
+              username,
+              campus,
+            },
+          }
+        : {}),
+    },
   });
 
   if (error) {
-    if (error.message.toLowerCase().includes('already registered')) {
+    if (looksLikeDuplicateSignupError(error.message)) {
       throw new Error('DUPLICATE_EMAIL: An account with this email already exists.');
     }
     throw new Error(`REGISTER_ERROR: ${error.message}`);
   }
 
+  if (!data?.user) {
+    throw new Error(
+      'REGISTER_ERROR: Could not create an account. Check your Supabase project and signup settings.'
+    );
+  }
+
   // Return a Student-shaped object matching the DCD Student class
   return {
-    studentId: data.user!.id,
-    email: data.user!.email,
-    name: '',          // Set during profile setup
-    campus: '',        // Set during profile setup
+    studentId: data.user.id,
+    email: data.user.email,
+    name: username,
+    campus,
     major: '',
     bio: '',
     avatarUrl: '',
