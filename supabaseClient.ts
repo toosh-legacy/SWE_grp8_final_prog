@@ -33,6 +33,10 @@ export const supabase =
           signInWithOAuth: async () => ({ data: {}, error: { message: missingEnvMessage } }),
           signUp: async () => ({ data: {}, error: { message: missingEnvMessage } }),
           signOut: async () => ({ error: { message: missingEnvMessage } }),
+          resetPasswordForEmail: async () => ({
+            data: {},
+            error: { message: missingEnvMessage },
+          }),
           getSession: async () => ({ data: { session: null }, error: null }),
           getUser: async () => ({ data: { user: null }, error: { message: missingEnvMessage } }),
         },

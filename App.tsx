@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import ForgotPasswordForm from './ForgotPasswordForm';
 import LoginForm from './LoginForm';
 import LogoutForm from './LogoutForm';
+import RegisterForm from './RegisterForm';
 
 function HomePage() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
       <Route path="/" element={<LoginForm />} />
       <Route path="/login" element={<LoginForm />} />
       <Route path="/logout" element={<LogoutForm />} />
+      <Route path="/register" element={<RegisterForm />} />
+      <Route path="/forgot-password" element={<ForgotPasswordForm />} />
       <Route path="/home" element={<HomePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
