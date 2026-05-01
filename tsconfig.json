@@ -1,79 +1,36 @@
 {
   "compilerOptions": {
-<<<<<<< HEAD
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-=======
-    "ignoreDeprecations": "6.0",
-    "target": "esnext",
-    "module": "esnext",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
->>>>>>> studygroups
+    "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-<<<<<<< HEAD
-=======
-    "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@/lib/*": [
-        "lib/*"
-      ]
-    },
->>>>>>> studygroups
     "plugins": [
       {
         "name": "next"
       }
-<<<<<<< HEAD
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/lib/*": ["./lib/*"]
     }
-=======
-    ]
->>>>>>> studygroups
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-<<<<<<< HEAD
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": [
-    "node_modules",
-    "vitest.config.ts",
-    "**/*.test.ts"
-=======
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
->>>>>>> studygroups
-  ]
+  "exclude": ["node_modules", "vitest.config.ts", "**/*.test.ts"]
 }

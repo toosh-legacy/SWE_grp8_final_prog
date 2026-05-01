@@ -5,6 +5,7 @@
   "/(dashboard)/study-groups/page": "app/(dashboard)/study-groups/page.js",
   "/_global-error/page": "app/_global-error/page.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/api/groups/route": "app/api/groups/route.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/forgot-password/page": "app/forgot-password/page.js",
   "/login/page": "app/login/page.js",
