@@ -10,8 +10,17 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { FormEvent } from 'react';
-import type { Post, FeedCategory } from '@/index';
-import { getFeedByCategory, searchFeed, likePost } from '@/postService';
+import type { Post, FeedCategory, Comment } from '@/index';
+import {
+  getFeedByCategory,
+  searchFeed,
+  likePost,
+  deletePost,
+  getLikeSummariesForPosts,
+  addComment,
+  getCommentsForPost,
+  MAX_COMMENT_LENGTH,
+} from '@/postService';
 import CreatePostForm from './CreatePostForm';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -34,6 +43,20 @@ const TAB_SECTION_LABEL: Record<FeedCategory, string> = {
   event: 'Events',
   announcement: 'Announcements',
 };
+
+/** Merge like counts / liked-by-me flags into feed posts for the current viewer. */
+async function withLikeSummaries(postList: Post[], viewerId: string): Promise<Post[]> {
+  if (postList.length === 0) return postList;
+  const summaries = await getLikeSummariesForPosts(
+    postList.map((p) => p.postId),
+    viewerId
+  );
+  return postList.map((p) => ({
+    ...p,
+    likeCount: summaries[p.postId]?.count ?? 0,
+    likedByMe: summaries[p.postId]?.likedByMe ?? false,
+  }));
+}
 
 function emptyFeedMessage(tab: FeedCategory, isSearching: boolean, query: string) {
   if (isSearching) {
@@ -68,13 +91,13 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
     setError('');
     try {
       const data = await getFeedByCategory(category);
-      setPosts(data);
-    } catch (err: any) {
-      setError('Failed to load feed. Please try again.');
+      setPosts(await withLikeSummaries(data, currentUserId));
+    } catch (err: unknown) {
+      console.error('Failed to load feed:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   useEffect(() => {
     if (!isSearching) loadFeed(activeTab);
@@ -94,7 +117,7 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
     setIsSearching(true);
     try {
       const results = await searchFeed(searchQuery.trim(), activeTab);
-      setPosts(results);
+      setPosts(await withLikeSummaries(results, currentUserId));
     } catch (err: any) {
       setError('Search failed. Please try again.');
     } finally {
@@ -113,12 +136,35 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
   async function handleLike(postId: string) {
     try {
       await likePost(postId, currentUserId);
-      // Optimistically reflect the like — a real app would re-fetch or update count
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.postId === postId
+            ? {
+                ...p,
+                likeCount: (p.likeCount ?? 0) + 1,
+                likedByMe: true,
+              }
+            : p
+        )
+      );
     } catch (err: any) {
-      // Silently swallow ALREADY_LIKED; surface other errors if needed
-      if (!err.message.includes('ALREADY_LIKED')) {
-        setError('Could not like post. Please try again.');
+      if (err.message?.includes('ALREADY_LIKED')) {
+        setPosts((prev) =>
+          prev.map((p) => (p.postId === postId ? { ...p, likedByMe: true } : p))
+        );
+        return;
       }
+      setError('Could not like post. Please try again.');
+    }
+  }
+
+  async function handleDeletePost(postId: string) {
+    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    try {
+      await deletePost(postId, currentUserId);
+      setPosts((prev) => prev.filter((p) => p.postId !== postId));
+    } catch {
+      setError('Could not delete post. Please try again.');
     }
   }
 
@@ -127,7 +173,12 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
   function handlePostCreated(newPost: Post) {
     // Prepend new post to the top of the feed (FR8c: newest first)
     if (newPost.type === activeTab) {
-      setPosts((prev) => [newPost, ...prev]);
+      const enriched: Post = {
+        ...newPost,
+        likeCount: 0,
+        likedByMe: false,
+      };
+      setPosts((prev) => [enriched, ...prev]);
     }
     setShowCreate(false);
   }
@@ -245,7 +296,9 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
                 <PostCard
                   key={post.postId}
                   post={post}
+                  currentUserId={currentUserId}
                   onLike={() => handleLike(post.postId)}
+                  onDelete={() => handleDeletePost(post.postId)}
                 />
               ))}
             </ul>
@@ -317,10 +370,18 @@ function FeedEmptyState({
 
 interface PostCardProps {
   post: Post;
+  currentUserId: string;
   onLike: () => void;
+  onDelete: () => void;
 }
 
-function PostCard({ post, onLike }: PostCardProps) {
+function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+
   const formattedDate = new Date(post.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day:   'numeric',
@@ -328,6 +389,43 @@ function PostCard({ post, onLike }: PostCardProps) {
     hour:  '2-digit',
     minute:'2-digit',
   });
+
+  const isOwner = post.authorId === currentUserId;
+  const likes = post.likeCount ?? 0;
+  const liked = !!post.likedByMe;
+
+  async function toggleComments() {
+    const next = !commentsOpen;
+    setCommentsOpen(next);
+    if (next) {
+      setCommentsLoading(true);
+      try {
+        const list = await getCommentsForPost(post.postId);
+        setComments(list);
+      } catch (err) {
+        console.error('Failed to load comments:', err);
+        setComments([]);
+      } finally {
+        setCommentsLoading(false);
+      }
+    }
+  }
+
+  async function handleCommentSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = commentText.trim();
+    if (!trimmed || commentSubmitting) return;
+    setCommentSubmitting(true);
+    try {
+      const created = await addComment(post.postId, currentUserId, trimmed);
+      setComments((prev) => [...prev, created]);
+      setCommentText('');
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    } finally {
+      setCommentSubmitting(false);
+    }
+  }
 
   return (
     <li className="post-card" aria-label={`Post by ${post.authorId}`}>
@@ -342,9 +440,10 @@ function PostCard({ post, onLike }: PostCardProps) {
         <div className="post-card__toolbar">
           <button
             type="button"
-            className="post-card__icon-action"
-            aria-label="Comments (coming soon)"
-            disabled
+            className={`post-card__icon-action ${commentsOpen ? 'post-card__icon-action--active' : ''}`}
+            aria-label={commentsOpen ? 'Hide comments' : 'View and add comments'}
+            aria-expanded={commentsOpen}
+            onClick={toggleComments}
           >
             <svg
               viewBox="0 0 24 24"
@@ -363,26 +462,56 @@ function PostCard({ post, onLike }: PostCardProps) {
               <circle cx="16" cy="12" r=".75" fill="currentColor" />
             </svg>
           </button>
-          <button
-            type="button"
-            className="post-card__icon-action"
-            onClick={onLike}
-            aria-label="Like this post"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
+          <div className="post-card__like-wrap">
+            <button
+              type="button"
+              className={`post-card__icon-action post-card__like ${liked ? 'post-card__like--active' : ''}`}
+              onClick={onLike}
+              disabled={liked}
+              aria-label={liked ? 'You liked this post' : 'Thumbs up this post'}
+              aria-pressed={liked}
             >
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-            </svg>
-          </button>
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+              </svg>
+            </button>
+            <span className="post-card__like-count" title={`${likes} like${likes === 1 ? '' : 's'}`}>
+              {likes}
+            </span>
+          </div>
+          {isOwner && (
+            <button
+              type="button"
+              className="post-card__icon-action post-card__delete"
+              onClick={onDelete}
+              aria-label="Delete your post"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+                <path d="M10 11v6M14 11v6" />
+              </svg>
+            </button>
+          )}
           <span className="post-card__chevron" aria-hidden>
             &#8250;
           </span>
@@ -398,6 +527,71 @@ function PostCard({ post, onLike }: PostCardProps) {
             alt="Post attachment"
             className="post-card__media"
           />
+        )}
+
+        {commentsOpen && (
+          <section
+            className="post-card__comments"
+            aria-label="Comments"
+          >
+            {commentsLoading ? (
+              <p className="post-card__comments-status">Loading comments…</p>
+            ) : comments.length === 0 ? (
+              <p className="post-card__comments-status">No comments yet. Be the first to reply.</p>
+            ) : (
+              <ul className="post-card__comment-list" role="list">
+                {comments.map((c) => (
+                  <li key={c.commentId} className="post-card__comment">
+                    <div className="post-card__comment-meta">
+                      <span className="post-card__comment-author">
+                        {c.authorId === currentUserId ? 'You' : 'User'}
+                      </span>
+                      <time
+                        className="post-card__comment-time"
+                        dateTime={c.createdAt}
+                      >
+                        {new Date(c.createdAt).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </time>
+                    </div>
+                    <p className="post-card__comment-body">{c.content}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <form className="post-card__comment-form" onSubmit={handleCommentSubmit}>
+              <label htmlFor={`comment-${post.postId}`} className="sr-only">
+                Write a comment
+              </label>
+              <textarea
+                id={`comment-${post.postId}`}
+                className="post-card__comment-input"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write a comment…"
+                rows={2}
+                maxLength={MAX_COMMENT_LENGTH}
+                disabled={commentSubmitting}
+              />
+              <div className="post-card__comment-form-footer">
+                <span className="post-card__comment-counter">
+                  {commentText.length}/{MAX_COMMENT_LENGTH}
+                </span>
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-comment-submit"
+                  disabled={commentSubmitting || !commentText.trim()}
+                >
+                  {commentSubmitting ? 'Posting…' : 'Comment'}
+                </button>
+              </div>
+            </form>
+          </section>
         )}
       </div>
     </li>

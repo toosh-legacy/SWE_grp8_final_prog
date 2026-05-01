@@ -29,5 +29,8 @@ export const supabase =
           }),
           getSession: async () => ({ data: { session: null }, error: null }),
           getUser: async () => ({ data: { user: null }, error: { message: missingEnvMessage } }),
+          onAuthStateChange: () => ({
+            data: { subscription: { unsubscribe: () => {} } },
+          }),
         },
       } as any);

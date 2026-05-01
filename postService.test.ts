@@ -167,12 +167,14 @@ import {
   deletePost,
   likePost,
   addComment,
+  getCommentsForPost,
   getFeedByCategory,
   searchFeed,
   isValidContent,
   isWithinPostLimit,
   isValidCategory,
   MAX_POST_LENGTH,
+  MAX_COMMENT_LENGTH,
 } from './postService';
 
 // ─── Supabase Mock ─────────────────────────────────────────────────────────────
@@ -498,6 +500,69 @@ describe('addComment()', () => {
     await expect(
       addComment('unknown-post-id', 'uuid-author-01', 'Great post!')
     ).rejects.toThrow('POST_NOT_FOUND');
+  });
+
+  it('AC4 | empty authorId → throws INVALID_AUTHOR (no Supabase call)', async () => {
+    await expect(
+      addComment('post-id-001', '', 'Great post!')
+    ).rejects.toThrow('INVALID_AUTHOR');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('AC5 | content over MAX_COMMENT_LENGTH → throws COMMENT_TOO_LONG', async () => {
+    await expect(
+      addComment('post-id-001', 'uuid-author-01', 'x'.repeat(MAX_COMMENT_LENGTH + 1))
+    ).rejects.toThrow('COMMENT_TOO_LONG');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// getCommentsForPost()
+// =============================================================================
+
+describe('getCommentsForPost()', () => {
+  it('GC1 | valid postId → resolves with Comment[]', async () => {
+    const rows = [
+      {
+        id: 'c1',
+        post_id: 'post-id-001',
+        user_id: 'uuid-a',
+        content: 'First',
+        created_at: '2026-04-19T10:00:00.000Z',
+      },
+      {
+        id: 'c2',
+        post_id: 'post-id-001',
+        user_id: 'uuid-b',
+        content: 'Second',
+        created_at: '2026-04-19T11:00:00.000Z',
+      },
+    ];
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: rows, error: null })
+    );
+
+    const list = await getCommentsForPost('post-id-001');
+
+    expect(list).toHaveLength(2);
+    expect(list[0].commentId).toBe('c1');
+    expect(list[0].content).toBe('First');
+    expect(list[1].commentId).toBe('c2');
+  });
+
+  it('GC2 | empty postId → throws INVALID_POST_ID', async () => {
+    await expect(getCommentsForPost('')).rejects.toThrow('INVALID_POST_ID');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('GC3 | no comments → resolves with []', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: [], error: null })
+    );
+
+    const list = await getCommentsForPost('post-id-001');
+    expect(list).toEqual([]);
   });
 });
 

@@ -39,22 +39,36 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     let cancelled = false;
+
+    const applySession = (session: { user: { id: string } } | null) => {
+      if (cancelled) return;
+      const id = session?.user?.id;
+      if (!id) {
+        setUserId(null);
+        router.replace('/login');
+        return;
+      }
+      setUserId(id);
+    };
+
     (async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        const session = data.session;
-        if (cancelled) return;
-        if (!session?.user?.id) {
-          router.replace('/login');
-          return;
-        }
-        setUserId(session.user.id);
+        applySession(data.session);
       } finally {
         if (!cancelled) setReady(true);
       }
     })();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        applySession(session);
+      }
+    );
+
     return () => {
       cancelled = true;
+      authListener.subscription.unsubscribe();
     };
   }, [router]);
 

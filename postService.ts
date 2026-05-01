@@ -21,6 +21,9 @@ import { VALID_FEED_CATEGORIES } from './index';
 // ─── Constants ─────────────────────────────────────────────────────────────────
 export const MAX_POST_LENGTH = 250; // FR8: max 250 characters
 
+/** Max length for comments on posts (matches DB check in `comments_table.sql`). */
+export const MAX_COMMENT_LENGTH = 500;
+
 // ─── Validation Helpers (exported for testing) ────────────────────────────────
 
 export function isValidContent(content: string | null | undefined): boolean {
@@ -30,6 +33,10 @@ export function isValidContent(content: string | null | undefined): boolean {
 
 export function isWithinPostLimit(content: string): boolean {
   return String(content).trim().length <= MAX_POST_LENGTH;
+}
+
+export function isWithinCommentLimit(content: string): boolean {
+  return String(content).trim().length <= MAX_COMMENT_LENGTH;
 }
 
 export function isValidCategory(type: string | null | undefined): type is FeedCategory {
@@ -191,11 +198,45 @@ export async function likePost(
   return true;
 }
 
+/** Per-post like totals and whether the viewer has liked the post. */
+export type PostLikeSummary = { count: number; likedByMe: boolean };
+
+/**
+ * Batch-load like counts and “liked by me” for feed cards.
+ * Any authenticated user may thumbs-up any post; this reflects stored `post_likes` rows.
+ */
+export async function getLikeSummariesForPosts(
+  postIds: string[],
+  viewerId: string
+): Promise<Record<string, PostLikeSummary>> {
+  const summary: Record<string, PostLikeSummary> = {};
+  for (const id of postIds) {
+    summary[id] = { count: 0, likedByMe: false };
+  }
+  if (postIds.length === 0 || !viewerId) return summary;
+
+  const { data, error } = await supabase
+    .from('post_likes')
+    .select('post_id, user_id')
+    .in('post_id', postIds);
+
+  if (error) throw new Error(`FETCH_LIKES_ERROR: ${error.message}`);
+
+  for (const row of data ?? []) {
+    const pid = row.post_id as string;
+    if (!summary[pid]) continue;
+    summary[pid].count++;
+    if (row.user_id === viewerId) summary[pid].likedByMe = true;
+  }
+
+  return summary;
+}
+
 // ─── addComment (FR8d) ────────────────────────────────────────────────────────
 
 /**
- * Pre-condition : postId exists. content is non-empty.
- * Post-condition: Comment saved and linked to post in database. Returns Comment.
+ * Pre-condition : postId exists; authorId is the authenticated user; content non-empty and ≤ MAX_COMMENT_LENGTH.
+ * Post-condition: Row inserted in `comments` (post_id, user_id, content). Returns Comment.
  */
 export async function addComment(
   postId: string,
@@ -205,8 +246,16 @@ export async function addComment(
   if (!postId || String(postId).trim() === '') {
     throw new Error('INVALID_POST_ID: postId is required.');
   }
+  if (!authorId || String(authorId).trim() === '') {
+    throw new Error('INVALID_AUTHOR: authorId is required.');
+  }
   if (!isValidContent(content)) {
     throw new Error('INVALID_CONTENT: Comment content cannot be empty.');
+  }
+  if (!isWithinCommentLimit(content)) {
+    throw new Error(
+      `COMMENT_TOO_LONG: Comment must be ${MAX_COMMENT_LENGTH} characters or fewer.`
+    );
   }
 
   // Verify the post exists
@@ -230,13 +279,26 @@ export async function addComment(
 
   if (error) throw new Error(`ADD_COMMENT_ERROR: ${error.message}`);
 
-  return {
-    commentId: data.id,
-    postId:    data.post_id,
-    authorId:  data.user_id,
-    content:   data.content,
-    createdAt: data.created_at,
-  };
+  return mapCommentRow(data);
+}
+
+/**
+ * Load all comments for a post, oldest first (conversation order).
+ */
+export async function getCommentsForPost(postId: string): Promise<Comment[]> {
+  if (!postId || String(postId).trim() === '') {
+    throw new Error('INVALID_POST_ID: postId is required.');
+  }
+
+  const { data, error } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('post_id', postId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(`FETCH_COMMENTS_ERROR: ${error.message}`);
+
+  return (data ?? []).map(mapCommentRow);
 }
 
 // ─── getFeedByCategory (FR8a, FR8c) ───────────────────────────────────────────
@@ -303,6 +365,16 @@ function mapToPost(d: Record<string, any>): Post {
     content:   d.content,
     mediaUrl:  d.media_url ?? null,
     type:      d.section as FeedCategory,
+    createdAt: d.created_at,
+  };
+}
+
+function mapCommentRow(d: Record<string, any>): Comment {
+  return {
+    commentId: d.id,
+    postId:    d.post_id,
+    authorId:  d.user_id,
+    content:   d.content,
     createdAt: d.created_at,
   };
 }

@@ -33,6 +33,10 @@ export interface Post {
   mediaUrl: string | null;
   type: FeedCategory;
   createdAt: string;      // ISO 8601 DateTime
+  /** Set when loading the feed for the current viewer */
+  likeCount?: number;
+  /** Whether the current viewer has liked this post */
+  likedByMe?: boolean;
 }
 
 // ─── Comment (Domain Model: Comment class) ────────────────────────────────────
