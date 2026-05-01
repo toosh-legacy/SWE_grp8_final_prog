@@ -105,6 +105,11 @@ self.__SERVER_FILES_MANIFEST={
       }
     },
     "outputFileTracingRoot": "C:\\Users\\natha\\SWE_grp8_final_prog",
+    "allowedDevOrigins": [
+      "192.168.10.63",
+      "localhost",
+      "127.0.0.1"
+    ],
     "cacheComponents": false,
     "cacheLife": {
       "default": {

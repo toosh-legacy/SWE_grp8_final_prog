@@ -1,28 +1,18 @@
 /**
  * supabaseClient.ts — Campus Connect
- * Supabase client initialization
  *
- * Initializes the Supabase client with your project URL and API key.
+ * Next.js exposes only variables prefixed with `NEXT_PUBLIC_*` to the browser.
+ * Set them in `.env.local` (local) or your hosting provider’s env (production).
  */
 
 import { createClient } from '@supabase/supabase-js';
 
-const viteEnv = (import.meta as any).env ?? {};
-const nodeEnv = (globalThis as any).process?.env ?? {};
-
-const SUPABASE_URL =
-  viteEnv.VITE_SUPABASE_URL ||
-  nodeEnv.VITE_SUPABASE_URL ||
-  nodeEnv.REACT_APP_SUPABASE_URL ||
-  '';
-const SUPABASE_ANON_KEY =
-  viteEnv.VITE_SUPABASE_ANON_KEY ||
-  nodeEnv.VITE_SUPABASE_ANON_KEY ||
-  nodeEnv.REACT_APP_SUPABASE_ANON_KEY ||
-  '';
+/** Static `process.env.NEXT_PUBLIC_*` access — required so Next.js inlines vars into client bundles (dynamic lookups are not inlined). */
+const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim();
+const SUPABASE_ANON_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '').trim();
 
 const missingEnvMessage =
-  'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in a .env file.';
+  'Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.';
 
 export const supabase =
   SUPABASE_URL && SUPABASE_ANON_KEY

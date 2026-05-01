@@ -1,6 +1,14 @@
 {
+  "/(dashboard)/home/page": "/home",
+  "/(dashboard)/messages/page": "/messages",
+  "/(dashboard)/profile/page": "/profile",
+  "/(dashboard)/study-groups/page": "/study-groups",
   "/_global-error/page": "/_global-error",
   "/_not-found/page": "/_not-found",
-  "/api/groups/route": "/api/groups",
-  "/page": "/"
+  "/favicon.ico/route": "/favicon.ico",
+  "/forgot-password/page": "/forgot-password",
+  "/login/page": "/login",
+  "/logout/page": "/logout",
+  "/page": "/",
+  "/register/page": "/register"
 }
