@@ -276,10 +276,10 @@ describe('isValidCategory()', () => {
 describe('createPost()', () => {
   const MOCK_POST_DB = {
     id:         'post-id-001',
-    author_id:  'uuid-author-01',
+    user_id:    'uuid-author-01',
     content:    'Study session at SU!',
     media_url:  null,
-    type:       'general',
+    section:    'general',
     created_at: '2026-04-19T10:00:00.000Z',
   };
 
@@ -331,7 +331,7 @@ describe('createPost()', () => {
 
   it('CP7 | valid fields, type = "event" → resolves with Post typed as event', async () => {
     vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: { ...MOCK_POST_DB, type: 'event', content: 'Tech Talk @ UTD this Fri!' }, error: null })
+      makeMock({ data: { ...MOCK_POST_DB, section: 'event', content: 'Tech Talk @ UTD this Fri!' }, error: null })
     );
 
     const post = await createPost('uuid-author-01', 'Tech Talk @ UTD this Fri!', 'event');
@@ -349,7 +349,7 @@ describe('editPost()', () => {
   it('EP1 | valid postId + matching author + valid content → resolves with true', async () => {
     // First call: fetch ownership check
     vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeMock({ data: { author_id: 'uuid-author-01' }, error: null }))
+      .mockReturnValueOnce(makeMock({ data: { user_id: 'uuid-author-01' }, error: null }))
       // Second call: update
       .mockReturnValueOnce(makeMock({ data: null, error: null }));
 
@@ -377,7 +377,7 @@ describe('editPost()', () => {
 
   it('EP4 | different authorId → throws UNAUTHORIZED', async () => {
     vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: { author_id: 'uuid-different-author' }, error: null })
+      makeMock({ data: { user_id: 'uuid-different-author' }, error: null })
     );
 
     await expect(
@@ -393,7 +393,7 @@ describe('editPost()', () => {
 describe('deletePost()', () => {
   it('DP1 | valid postId + matching author → resolves with true', async () => {
     vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeMock({ data: { author_id: 'uuid-author-01' }, error: null }))
+      .mockReturnValueOnce(makeMock({ data: { user_id: 'uuid-author-01' }, error: null }))
       .mockReturnValueOnce(makeMock({ data: null, error: null }));
 
     const result = await deletePost('post-id-001', 'uuid-author-01');
@@ -411,7 +411,7 @@ describe('deletePost()', () => {
 
   it('DP3 | different authorId → throws UNAUTHORIZED', async () => {
     vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: { author_id: 'uuid-someone-else' }, error: null })
+      makeMock({ data: { user_id: 'uuid-someone-else' }, error: null })
     );
 
     await expect(deletePost('post-id-001', 'uuid-author-01')).rejects.toThrow('UNAUTHORIZED');
@@ -462,7 +462,7 @@ describe('addComment()', () => {
   const MOCK_COMMENT_DB = {
     id:         'comment-id-001',
     post_id:    'post-id-001',
-    author_id:  'uuid-author-01',
+    user_id:    'uuid-author-01',
     content:    'Great post!',
     created_at: '2026-04-19T11:00:00.000Z',
   };
@@ -508,12 +508,12 @@ describe('addComment()', () => {
 describe('getFeedByCategory()', () => {
   const MOCK_POSTS = [
     {
-      id: 'post-id-001', author_id: 'uuid-a', content: 'Hello!',
-      media_url: null, type: 'general', created_at: '2026-04-19T10:00:00.000Z',
+      id: 'post-id-001', user_id: 'uuid-a', content: 'Hello!',
+      media_url: null, section: 'general', created_at: '2026-04-19T10:00:00.000Z',
     },
     {
-      id: 'post-id-002', author_id: 'uuid-b', content: 'World!',
-      media_url: null, type: 'general', created_at: '2026-04-18T09:00:00.000Z',
+      id: 'post-id-002', user_id: 'uuid-b', content: 'World!',
+      media_url: null, section: 'general', created_at: '2026-04-18T09:00:00.000Z',
     },
   ];
 
@@ -555,8 +555,8 @@ describe('searchFeed()', () => {
   it('SF1 | valid query → resolves with matching Post array', async () => {
     const mockResults = [
       {
-        id: 'post-id-003', author_id: 'uuid-c', content: 'Study group forming for CS 3354!',
-        media_url: null, type: 'general', created_at: '2026-04-19T12:00:00.000Z',
+        id: 'post-id-003', user_id: 'uuid-c', content: 'Study group forming for CS 3354!',
+        media_url: null, section: 'general', created_at: '2026-04-19T12:00:00.000Z',
       },
     ];
     vi.mocked(supabase.from).mockReturnValueOnce(

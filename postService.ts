@@ -69,10 +69,9 @@ export async function createPost(
   const { data, error } = await supabase
     .from('posts')
     .insert({
-      author_id:  authorId,
-      content:    content.trim(),
-      type,
-      created_at: new Date().toISOString(),
+      user_id: authorId,
+      section: type,
+      content: content.trim(),
     })
     .select()
     .single();
@@ -108,12 +107,12 @@ export async function editPost(
   // Verify post exists and requester is the author
   const { data: existing, error: fetchError } = await supabase
     .from('posts')
-    .select('author_id')
+    .select('user_id')
     .eq('id', postId)
     .single();
 
   if (fetchError || !existing) throw new Error('POST_NOT_FOUND: Post does not exist.');
-  if (existing.author_id !== authorId) {
+  if (existing.user_id !== authorId) {
     throw new Error('UNAUTHORIZED: You can only edit your own posts.');
   }
 
@@ -142,12 +141,12 @@ export async function deletePost(
 
   const { data: existing, error: fetchError } = await supabase
     .from('posts')
-    .select('author_id')
+    .select('user_id')
     .eq('id', postId)
     .single();
 
   if (fetchError || !existing) throw new Error('POST_NOT_FOUND: Post does not exist.');
-  if (existing.author_id !== authorId) {
+  if (existing.user_id !== authorId) {
     throw new Error('UNAUTHORIZED: You can only delete your own posts.');
   }
 
@@ -178,14 +177,14 @@ export async function likePost(
     .from('post_likes')
     .select('post_id')
     .eq('post_id', postId)
-    .eq('student_id', studentId)
+    .eq('user_id', studentId)
     .single();
 
   if (existing) throw new Error('ALREADY_LIKED: You have already liked this post.');
 
   const { error } = await supabase.from('post_likes').insert({
-    post_id:    postId,
-    student_id: studentId,
+    post_id: postId,
+    user_id: studentId,
   });
 
   if (error) throw new Error(`LIKE_POST_ERROR: ${error.message}`);
@@ -222,10 +221,9 @@ export async function addComment(
   const { data, error } = await supabase
     .from('comments')
     .insert({
-      post_id:    postId,
-      author_id:  authorId,
-      content:    content.trim(),
-      created_at: new Date().toISOString(),
+      post_id: postId,
+      user_id: authorId,
+      content: content.trim(),
     })
     .select()
     .single();
@@ -235,7 +233,7 @@ export async function addComment(
   return {
     commentId: data.id,
     postId:    data.post_id,
-    authorId:  data.author_id,
+    authorId:  data.user_id,
     content:   data.content,
     createdAt: data.created_at,
   };
@@ -257,7 +255,7 @@ export async function getFeedByCategory(category: string): Promise<Post[]> {
   const { data, error } = await supabase
     .from('posts')
     .select('*')
-    .eq('type', category)
+    .eq('section', category)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`FETCH_FEED_ERROR: ${error.message}`);
@@ -287,7 +285,7 @@ export async function searchFeed(
     .order('created_at', { ascending: false });
 
   if (category && isValidCategory(category)) {
-    builder = (builder as any).eq('type', category);
+    builder = (builder as any).eq('section', category);
   }
 
   const { data, error } = await builder;
@@ -301,10 +299,10 @@ export async function searchFeed(
 function mapToPost(d: Record<string, any>): Post {
   return {
     postId:    d.id,
-    authorId:  d.author_id,
+    authorId:  d.user_id,
     content:   d.content,
     mediaUrl:  d.media_url ?? null,
-    type:      d.type as FeedCategory,
+    type:      d.section as FeedCategory,
     createdAt: d.created_at,
   };
 }

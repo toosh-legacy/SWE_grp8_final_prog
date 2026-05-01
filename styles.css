@@ -971,6 +971,29 @@ a {
   border: 1px dashed rgb(0 0 0 / 0.1);
 }
 
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.feed-empty__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #2a2a2a;
+}
+
+.feed-empty__detail {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #4a4a4a;
+}
+
 .create-post-panel {
   background: rgb(220 220 220 / 0.95);
   border-radius: 16px;

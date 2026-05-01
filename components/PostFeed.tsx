@@ -28,6 +28,26 @@ const TABS: { label: string; value: FeedCategory }[] = [
   { label: 'Announcements', value: 'announcement'  },
 ];
 
+/** Display name for empty-state copy (matches tab labels). */
+const TAB_SECTION_LABEL: Record<FeedCategory, string> = {
+  general: 'General',
+  event: 'Events',
+  announcement: 'Announcements',
+};
+
+function emptyFeedMessage(tab: FeedCategory, isSearching: boolean, query: string) {
+  if (isSearching) {
+    return {
+      title: 'No posts to display',
+      detail: `There is no information to show for your search. No results for "${query}".`,
+    };
+  }
+  return {
+    title: 'No posts to display',
+    detail: `There is no information to load for the ${TAB_SECTION_LABEL[tab]} tab right now.`,
+  };
+}
+
 // =============================================================================
 // PostFeed Component
 // =============================================================================
@@ -214,11 +234,11 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
           {loading ? (
             <div className="feed-loading" aria-live="polite">Loading posts…</div>
           ) : posts.length === 0 ? (
-            <div className="feed-empty">
-              {isSearching
-                ? 'No posts matched your search.'
-                : `No ${activeTab} posts yet. Be the first to post!`}
-            </div>
+            <FeedEmptyState
+              tab={activeTab}
+              isSearching={isSearching}
+              searchQuery={searchQuery}
+            />
           ) : (
             <ul className="post-list" role="list">
               {posts.map((post) => (
@@ -265,6 +285,28 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
           </span>
         </button>
       </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// FeedEmptyState
+// =============================================================================
+
+function FeedEmptyState({
+  tab,
+  isSearching,
+  searchQuery,
+}: {
+  tab: FeedCategory;
+  isSearching: boolean;
+  searchQuery: string;
+}) {
+  const { title, detail } = emptyFeedMessage(tab, isSearching, searchQuery.trim());
+  return (
+    <div className="feed-empty" role="status">
+      <p className="feed-empty__title">{title}</p>
+      <p className="feed-empty__detail">{detail}</p>
     </div>
   );
 }
