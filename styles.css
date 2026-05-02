@@ -10,7 +10,7 @@ body {
 }
 
 a {
-  color: #4e74c7;
+  color: var(--app-link, #e05037);
 }
 
 .login-container {
@@ -3865,7 +3865,7 @@ body {
 }
 
 .profile-header__name {
-  color: #f0f0f0;
+  color: var(--dash-text);
 }
 
 .profile-header__subtitle {
@@ -3873,19 +3873,19 @@ body {
 }
 
 .profile-header__meta {
-  color: #888;
+  color: var(--dash-muted);
 }
 
 .profile-header__bio {
-  color: #aaa;
+  color: var(--dash-text);
 }
 
 .profile-stat__value {
-  color: #f0f0f0;
+  color: var(--dash-text);
 }
 
 .profile-stat__label {
-  color: #555;
+  color: var(--dash-muted);
 }
 
 .profile-stats {
@@ -3894,8 +3894,8 @@ body {
 }
 
 .profile-header__avatar {
-  background: #2a2a2a;
-  border: 3px solid #333;
+  background: var(--dash-feed-inner);
+  border: 3px solid var(--dash-border);
 }
 
 .profile-header__avatar:hover {
@@ -3904,7 +3904,7 @@ body {
 }
 
 .profile-header__avatar-initials {
-  color: #ccc;
+  color: var(--dash-muted);
 }
 
 .profile-posts {
@@ -3914,7 +3914,7 @@ body {
 }
 
 .profile-posts__title {
-  color: #f0f0f0;
+  color: var(--dash-text);
 }
 
 .profile-posts__header {
@@ -3922,7 +3922,7 @@ body {
 }
 
 .profile-posts__count {
-  color: #555;
+  color: var(--dash-muted);
 }
 
 .profile-post-tag {
@@ -4483,4 +4483,104 @@ body {
   .app-shell__nav-link {
     padding: 8px;
   }
+}
+
+/* Theme mode final overrides: light => orange/white, dark => orange/black */
+:root {
+  --app-bg: #f4f4f4;
+  --app-text: #1f2937;
+  --app-link: #e05037;
+  --dash-bg: #f4f4f4;
+  --dash-panel: #ffffff;
+  --dash-feed-panel: #ffffff;
+  --dash-feed-inner: #ffffff;
+  --dash-border: #e4e4e7;
+  --dash-text: #111827;
+  --dash-muted: #6b7280;
+}
+
+.dark {
+  --app-bg: #282828;
+  --app-text: #f4f4f4;
+  --app-link: #e05037;
+  --dash-bg: #111111;
+  --dash-panel: #191919;
+  --dash-feed-panel: #161616;
+  --dash-feed-inner: #1c1c1c;
+  --dash-border: #272727;
+  --dash-text: #ededed;
+  --dash-muted: #7a7a7a;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+a {
+  color: var(--app-link);
+}
+
+.app-shell,
+.app-shell__main,
+.dashboard-auth-gate {
+  background: var(--dash-bg);
+}
+
+.app-shell__sidebar,
+.app-shell__masthead,
+.home-hub__feed,
+.post-card__header {
+  background: var(--dash-panel);
+  border-color: var(--dash-border);
+}
+
+.post-card__body {
+  background: var(--dash-feed-inner);
+}
+
+.feed-title,
+.shell-page-heading,
+.post-card__content,
+.post-card__comment-body {
+  color: var(--dash-text);
+}
+
+.post-card__date,
+.feed-search-label {
+  color: var(--dash-muted);
+}
+
+.post-card__user-label,
+.post-card__user-link {
+  color: var(--dash-text);
+}
+
+.post-card__like-count,
+.post-card__icon-action,
+.post-card__chevron {
+  color: var(--dash-muted);
+}
+
+.shell-icon-btn,
+.shell-toolbar__logout {
+  color: var(--dash-muted);
+  border-color: var(--dash-border);
+}
+
+.shell-icon-btn:hover,
+.shell-toolbar__logout:hover {
+  background: rgb(0 0 0 / 0.06);
+  color: var(--dash-text);
+  border-color: var(--dash-border);
+}
+
+.feed-search {
+  background: var(--dash-feed-panel);
+  border-color: var(--dash-border);
+}
+
+.dark .shell-icon-btn:hover,
+.dark .shell-toolbar__logout:hover {
+  background: rgb(255 255 255 / 0.06);
 }

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useSettings } from "@/components/settings/settings-provider";
 import { CAMPUSES } from "@/lib/settings/campuses";
 import { readImageAsDataUrl } from "@/lib/settings/image";
+import { supabase } from "@/supabaseClient";
 import { useEffect, useRef, useState } from "react";
 
 export default function ProfileSettingsPage() {
@@ -29,8 +30,18 @@ export default function ProfileSettingsPage() {
     setImageError(null);
     try {
       const dataUrl = await readImageAsDataUrl(file);
-      if (!mountedRef.current) return;
       update({ avatarDataUrl: dataUrl });
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      if (userId) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ avatar_url: dataUrl })
+          .eq("id", userId);
+        if (error && mountedRef.current) {
+          setImageError("Saved locally, but could not sync avatar to profile.");
+        }
+      }
     } catch (err) {
       if (!mountedRef.current) return;
       setImageError(err instanceof Error ? err.message : "Could not load image");
@@ -73,7 +84,7 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-      <h2 className="text-lg font-semibold">Profile</h2>
+      <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Profile</h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         Edit how you appear to study partners on campus.
       </p>

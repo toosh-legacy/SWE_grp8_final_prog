@@ -13,6 +13,7 @@ import {
 } from '@/connectionService';
 import type { PendingRequest } from '@/connectionService';
 import { useDashboardUserId } from './DashboardLayout';
+import { useSettings } from '@/components/settings/settings-provider';
 
 interface ProfileIdentity {
   displayName: string;
@@ -57,6 +58,7 @@ function initialsOf(name: string): string {
 
 export default function ProfileView() {
   const userId = useDashboardUserId();
+  const { settings } = useSettings();
 
   const [identity, setIdentity] = useState<ProfileIdentity>(EMPTY_IDENTITY);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -102,6 +104,15 @@ export default function ProfileView() {
     return () => { cancelled = true; };
   }, [userId]);
 
+  useEffect(() => {
+    const nextAvatar = settings.avatarDataUrl?.trim();
+    if (!nextAvatar) return;
+    setIdentity((prev) => {
+      if (prev.avatarUrl === nextAvatar) return prev;
+      return { ...prev, avatarUrl: nextAvatar };
+    });
+  }, [settings.avatarDataUrl]);
+
   async function handleAccept(req: PendingRequest) {
     try {
       await acceptConnection(req.connectionId);
@@ -121,15 +132,18 @@ export default function ProfileView() {
     }
   }
 
-  const initials = useMemo(() => initialsOf(identity.displayName), [identity.displayName]);
+  const profileDisplayName = settings.displayName.trim() || identity.displayName;
+  const profileBio = settings.bio.trim() || identity.bio;
+  const initials = useMemo(() => initialsOf(profileDisplayName), [profileDisplayName]);
   const subtitle = identity.username ? `@${identity.username}` : '';
+  const profileAvatarUrl = settings.avatarDataUrl?.trim() || identity.avatarUrl;
 
   return (
     <div className="profile-page">
       <section className="profile-header" aria-labelledby="profile-name">
         <div className="profile-header__avatar" aria-hidden>
-          {identity.avatarUrl ? (
-            <img src={identity.avatarUrl} alt="" className="profile-header__avatar-img" />
+          {profileAvatarUrl ? (
+            <img src={profileAvatarUrl} alt="" className="profile-header__avatar-img" />
           ) : (
             <span className="profile-header__avatar-initials">{initials}</span>
           )}
@@ -137,7 +151,7 @@ export default function ProfileView() {
 
         <div className="profile-header__identity">
           <h2 id="profile-name" className="profile-header__name">
-            {identity.displayName}
+            {profileDisplayName}
           </h2>
           {subtitle && <p className="profile-header__subtitle">{subtitle}</p>}
 
@@ -148,7 +162,7 @@ export default function ProfileView() {
             </p>
           )}
 
-          {identity.bio && <p className="profile-header__bio">{identity.bio}</p>}
+          {profileBio && <p className="profile-header__bio">{profileBio}</p>}
 
           <div className="profile-stats" role="list">
             <div className="profile-stat" role="listitem">
@@ -232,8 +246,8 @@ export default function ProfileView() {
               <ProfilePostCard
                 key={post.postId}
                 post={post}
-                authorName={post.authorName}
-                authorPFP={post.authorPFP}
+                authorName={profileDisplayName || post.authorName}
+                authorPFP={profileAvatarUrl || post.authorPFP}
               />
             ))}
           </ul>

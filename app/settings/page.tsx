@@ -28,7 +28,7 @@ const cards = [
 ] as const;
 
 export default function SettingsHomePage() {
-  const { settings, ready, reset } = useSettings();
+  const { settings, ready, reset, accountEmail } = useSettings();
   function handleReset() {
     if (!window.confirm("Reset all settings on this browser back to defaults?")) {
       return;
@@ -61,7 +61,7 @@ export default function SettingsHomePage() {
             <div>
               <dt className="text-zinc-500">Email</dt>
               <dd className="font-medium text-zinc-900 dark:text-zinc-100">
-                {settings.email || "—"}
+                {accountEmail.trim() ? accountEmail : "—"}
               </dd>
             </div>
             <div>

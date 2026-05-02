@@ -64,16 +64,17 @@
 import { GroupController } from '../lib/GroupController'
 import { DBMgr } from '../lib/DBMgr'
 import { Msg } from '../lib/Msg'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 // Mock DBMgr
-const mockSave = jest.fn()
+const mockSave = vi.fn()
 const mockDB = { saveStudyGroup: mockSave } as unknown as DBMgr
 
 describe('GroupController - createGroup', () => {
   let controller: GroupController
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     mockSave.mockResolvedValue(undefined) // default: DB succeeds
     controller = new GroupController(mockDB)
   })
