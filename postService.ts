@@ -293,18 +293,13 @@ export async function addComment(
 // ─── getFeedByCategory (FR8a, FR8c) ──────────────────────────────────────────
 
 /**
- * Pre-condition : category is general or announcement (`events` tab uses `events` table in UI).
- * Post-condition: Returns all posts in that category, sorted newest-first (FR8c).
+ * Pre-condition : category is a valid FeedCategory.
+ * Post-condition: Posts in that section, newest first (FR8c).
  */
 export async function getFeedByCategory(category: string): Promise<Post[]> {
   if (!isValidCategory(category)) {
     throw new Error(
       'INVALID_CATEGORY: Category must be "general", "announcement", or "events".'
-    );
-  }
-  if (category === 'events') {
-    throw new Error(
-      'INVALID_CATEGORY: Upcoming events are listed from the events table — use eventService.getNextUpcomingEvents.'
     );
   }
 
@@ -339,11 +334,6 @@ export async function searchFeed(query: string, category?: FeedCategory): Promis
   if (category != null && String(category).trim() !== '') {
     if (!isValidCategory(category)) {
       throw new Error('INVALID_CATEGORY');
-    }
-    if (category === 'events') {
-      throw new Error(
-        'INVALID_CATEGORY: Events are stored in the events table — use eventService.searchUpcomingEvents.'
-      );
     }
   }
 

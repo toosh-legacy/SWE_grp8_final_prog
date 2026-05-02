@@ -5,7 +5,7 @@
  * Main home feed (tabs, posts, events from DB, create post).
  *
  * Covers FR8a (sections), FR8c (newest first via services), FR8d (likes/comments).
- * General/announcement rows come from postService; the Events tab uses eventService.
+ * General/announcement/events rows come from postService; calendar RSVPs still come from eventService on the Events tab.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -75,8 +75,8 @@ async function withLikeSummaries(posts: Post[], viewerId: string): Promise<Post[
 function emptyStateCopy(tab: FeedCategory): { title: string; detail: string } {
   if (tab === 'events') {
     return {
-      title: 'No upcoming events',
-      detail: 'Nothing on the calendar for this tab yet.',
+      title: 'No events yet',
+      detail: 'No event posts or calendar items here yet.',
     };
   }
   return {
@@ -107,8 +107,12 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
       setError('');
       try {
         if (category === 'events') {
-          setPosts([]);
-          setFeedEvents(await getNextUpcomingEvents(EVENT_FEED_TAB_LIMIT));
+          const [rows, evs] = await Promise.all([
+            getFeedByCategory('events'),
+            getNextUpcomingEvents(EVENT_FEED_TAB_LIMIT),
+          ]);
+          setPosts(await withLikeSummaries(rows, currentUserId));
+          setFeedEvents(evs);
         } else {
           setFeedEvents([]);
           const rows = await getFeedByCategory(category);
@@ -223,10 +227,19 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
               Loading…
             </div>
           ) : activeTab === 'events' ? (
-            feedEvents.length === 0 ? (
+            posts.length === 0 && feedEvents.length === 0 ? (
               <FeedEmpty tab={activeTab} />
             ) : (
               <ul className="post-list" role="list">
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.postId}
+                    post={post}
+                    currentUserId={currentUserId}
+                    onLike={() => handleLike(post.postId)}
+                    onDelete={() => handleDeletePost(post.postId)}
+                  />
+                ))}
                 {feedEvents.map((ev) => (
                   <EventFeedCard key={ev.eventId} ev={ev} />
                 ))}
