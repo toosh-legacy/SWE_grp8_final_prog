@@ -41,7 +41,6 @@ interface DashboardLayoutProps {
 const NAV_ITEMS: { label: string; href: string }[] = [
   { label: 'Home', href: '/home' },
   { label: 'Study Groups', href: '/study-groups' },
-  { label: 'Direct Messages', href: '/messages' },
   { label: 'Profile', href: '/profile' },
 ];
 
@@ -158,7 +157,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 function titleForPath(pathname: string): string {
   if (pathname.startsWith('/study-group-messages/')) return 'Study Group';
   if (pathname.startsWith('/study-groups')) return 'Study Groups';
-  if (pathname.startsWith('/messages')) return 'Direct Messages';
   if (pathname.startsWith('/profile')) return 'Profile';
   if (pathname.startsWith('/users/')) return 'Profile';
   return 'Home';
