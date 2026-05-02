@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/supabaseClient';
+import { Home, Users, User, LogOut } from 'lucide-react';
 
 // ─── Context ───────────────────────────────────────────────────────────────────
 
@@ -38,10 +39,10 @@ interface DashboardLayoutProps {
 
 // ─── Nav config ────────────────────────────────────────────────────────────────
 
-const NAV_ITEMS: { label: string; href: string }[] = [
-  { label: 'Home', href: '/home' },
-  { label: 'Study Groups', href: '/study-groups' },
-  { label: 'Profile', href: '/profile' },
+const NAV_ITEMS: { label: string; href: string; icon: React.ReactNode }[] = [
+  { label: 'Home',         href: '/home',          icon: <Home size={18} strokeWidth={2} /> },
+  { label: 'Study Groups', href: '/study-groups',   icon: <Users size={18} strokeWidth={2} /> },
+  { label: 'Profile',      href: '/profile',        icon: <User size={18} strokeWidth={2} /> },
 ];
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -101,18 +102,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <DashboardUserContext.Provider value={userId}>
       <div className="app-shell">
         <aside className="app-shell__sidebar" aria-label="Main navigation">
+          <div className="app-shell__sidebar-brand" aria-hidden>
+            <div className="sidebar-brand__mark">CC</div>
+            <span className="sidebar-brand__name">Campus Connect</span>
+          </div>
           <nav className="app-shell__nav">
-            {NAV_ITEMS.map(({ label, href }) => (
+            {NAV_ITEMS.map(({ label, href, icon }) => (
               <Link
                 key={href}
                 href={href}
                 className={
-                  pathname === href
+                  pathname === href || (href !== '/home' && pathname.startsWith(href))
                     ? 'app-shell__nav-link app-shell__nav-link--active'
                     : 'app-shell__nav-link'
                 }
               >
-                {label}
+                <span className="nav-link__icon" aria-hidden>{icon}</span>
+                <span className="nav-link__label">{label}</span>
               </Link>
             ))}
           </nav>
@@ -121,27 +127,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="app-shell__body">
           <div className="app-shell__masthead">
             <h1 className="shell-page-heading">{heading}</h1>
-            <div className="shell-toolbar" role="presentation">
-              <span className="shell-brand-pill">Campus Connect</span>
-              <div className="shell-toolbar__tools">
-                <Link href="/profile" className="shell-icon-btn" aria-label="Settings">
-                  <svg
-                    className="shell-icon-btn__svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={1.75}
-                    strokeLinecap="round"
-                    aria-hidden
-                  >
-                    <circle cx="12" cy="12" r="3.25" />
-                    <path d="M12 1v2.5M12 20.5V23M4.22 4.22l1.77 1.77M17.91 17.91l1.77 1.77M1 12h2.5M20.5 12H23M4.22 19.78l1.77-1.77M17.91 6.09l1.77-1.77" />
-                  </svg>
-                </Link>
-                <Link href="/logout" className="shell-toolbar__logout">
-                  Logout
-                </Link>
-              </div>
+            <div className="shell-toolbar__tools">
+              <Link href="/profile" className="shell-icon-btn" aria-label="Profile">
+                <User size={20} strokeWidth={1.75} />
+              </Link>
+              <Link href="/logout" className="shell-toolbar__logout" aria-label="Logout">
+                <LogOut size={16} strokeWidth={2} />
+                <span>Logout</span>
+              </Link>
             </div>
           </div>
 

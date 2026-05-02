@@ -258,14 +258,12 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
         <span className="feed-fab-label">Create Post</span>
         <button
           type="button"
-          className="feed-create-fab"
+          className={`feed-create-fab${showCreate ? ' feed-create-fab--open' : ''}`}
           title={showCreate ? 'Close' : 'Create post'}
           aria-label={showCreate ? 'Close create panel' : 'Create post'}
           onClick={() => setShowCreate((v) => !v)}
         >
-          <span aria-hidden className="feed-create-fab__plus">
-            {showCreate ? '\u2715' : '+'}
-          </span>
+          <span aria-hidden className="feed-create-fab__plus">+</span>
         </button>
       </div>
     </div>
