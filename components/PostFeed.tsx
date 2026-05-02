@@ -5,7 +5,7 @@
  * Main home feed (tabs, posts, events from DB, create post).
  *
  * Covers FR8a (sections), FR8c (newest first via services), FR8d (likes/comments).
- * General/announcement/events rows come from postService; calendar RSVPs still come from eventService on the Events tab.
+ * General/announcement rows come from postService; the Events tab uses eventService (events table).
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -76,7 +76,7 @@ function emptyStateCopy(tab: FeedCategory): { title: string; detail: string } {
   if (tab === 'events') {
     return {
       title: 'No events yet',
-      detail: 'No event posts or calendar items here yet.',
+      detail: 'No upcoming events in the calendar yet.',
     };
   }
   return {
@@ -107,12 +107,8 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
       setError('');
       try {
         if (category === 'events') {
-          const [rows, evs] = await Promise.all([
-            getFeedByCategory('events'),
-            getNextUpcomingEvents(EVENT_FEED_TAB_LIMIT),
-          ]);
-          setPosts(await withLikeSummaries(rows, currentUserId));
-          setFeedEvents(evs);
+          setPosts([]);
+          setFeedEvents(await getNextUpcomingEvents(EVENT_FEED_TAB_LIMIT));
         } else {
           setFeedEvents([]);
           const rows = await getFeedByCategory(category);
@@ -160,7 +156,7 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
   }
 
   function onPostCreated(newPost: Post) {
-    if (newPost.type === activeTab) {
+    if (newPost.type === activeTab && activeTab !== 'events') {
       setPosts((prev) => [{ ...newPost, likeCount: 0, likedByMe: false }, ...prev]);
     }
     setShowCreate(false);
@@ -168,7 +164,11 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
 
   function onEventCreated(ev: CampusEvent) {
     if (activeTab === 'events') {
-      setFeedEvents((prev) => [ev, ...prev.filter((e) => e.eventId !== ev.eventId)]);
+      setFeedEvents((prev) =>
+        [...prev.filter((e) => e.eventId !== ev.eventId), ev].sort(
+          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        )
+      );
     }
     setShowCreate(false);
   }
@@ -227,19 +227,10 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
               Loading…
             </div>
           ) : activeTab === 'events' ? (
-            posts.length === 0 && feedEvents.length === 0 ? (
+            feedEvents.length === 0 ? (
               <FeedEmpty tab={activeTab} />
             ) : (
               <ul className="post-list" role="list">
-                {posts.map((post) => (
-                  <PostCard
-                    key={post.postId}
-                    post={post}
-                    currentUserId={currentUserId}
-                    onLike={() => handleLike(post.postId)}
-                    onDelete={() => handleDeletePost(post.postId)}
-                  />
-                ))}
                 {feedEvents.map((ev) => (
                   <EventFeedCard key={ev.eventId} ev={ev} />
                 ))}

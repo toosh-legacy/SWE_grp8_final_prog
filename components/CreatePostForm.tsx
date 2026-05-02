@@ -5,7 +5,7 @@
  * Create Post / Event Form Component
  *
  * Covers FR8 (publish content), FR8a (section selection), FR18 (events).
- * Calls postService.createPost for general/announcements and eventService.publishEvent for events.
+ * General and announcements use postService.createPost; events use eventService.publishEvent (events table).
  */
 
 import { useState } from 'react';
@@ -31,6 +31,7 @@ export default function CreatePostForm({
   authorId,
   defaultType = 'general',
   onPostCreated,
+  onEventCreated,
   onCancel,
 }: CreatePostFormProps) {
   // Shared state
@@ -57,11 +58,12 @@ export default function CreatePostForm({
     if (isOverLimit)      return `Post must be ${MAX_POST_LENGTH} characters or fewer.`;
 
     if (isEventMode) {
-      if (!eventTitle.trim())    return 'Event title is required.';
+      if (!eventTitle.trim()) return 'Event title is required.';
       if (!eventLocation.trim()) return 'Event location is required.';
-      if (!eventDate)            return 'Event date/time is required.';
-      if (eventCapacity !== '' && Number(eventCapacity) <= 0)
-        return 'Event capacity must be a positive number.';
+      if (!eventDate) return 'Event date/time is required.';
+      if (eventCapacity === '' || !Number.isInteger(Number(eventCapacity)) || Number(eventCapacity) < 1) {
+        return 'Max attendees must be a whole number at least 1.';
+      }
     }
 
     return '';
@@ -78,24 +80,23 @@ export default function CreatePostForm({
 
     setLoading(true);
     try {
-      let metadata = undefined;
-
-      // If it's an event, package the details into the JSONB object
       if (isEventMode) {
-        metadata = {
-          title: eventTitle.trim(),
-          location: eventLocation.trim(),
-          eventDate: new Date(eventDate).toISOString(),
-          maxAttendees: eventCapacity ? Number(eventCapacity) : null,
-        };
+        const capacity = Number(eventCapacity);
+        const created = await publishEvent(
+          authorId,
+          eventTitle.trim(),
+          eventLocation.trim(),
+          new Date(eventDate).toISOString(),
+          capacity,
+          content.trim()
+        );
+        onEventCreated?.(created);
+      } else {
+        const post = await createPost(authorId, content, type);
+        onPostCreated(post);
       }
-
-      // One single call handles both General posts AND Events
-      const post = await createPost(authorId, content, type, metadata);
-      onPostCreated(post);
-      
-    } catch (err: any) {
-      const msg = err.message ?? 'Something went wrong. Please try again.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setError(msg.replace(/^[A-Z_]+:\s*/, ''));
     } finally {
       setLoading(false);

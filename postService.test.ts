@@ -609,6 +609,11 @@ describe('getFeedByCategory()', () => {
     await expect(getFeedByCategory('event')).rejects.toThrow('INVALID_CATEGORY');
     expect(supabase.from).not.toHaveBeenCalled();
   });
+
+  it('GF4 | category = "events" → throws (use eventService, not posts)', async () => {
+    await expect(getFeedByCategory('events')).rejects.toThrow('eventService');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
 });
 
 // =============================================================================
@@ -651,6 +656,11 @@ describe('searchFeed()', () => {
 
   it('SF4 | category = "event" → throws INVALID_CATEGORY', async () => {
     await expect(searchFeed('hello', 'event')).rejects.toThrow('INVALID_CATEGORY');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('SF5 | category = "events" → throws (use eventService)', async () => {
+    await expect(searchFeed('hello', 'events')).rejects.toThrow('eventService');
     expect(supabase.from).not.toHaveBeenCalled();
   });
 });
