@@ -170,7 +170,7 @@ import { logout, isValidAuthId } from './logout';
 // We mock the entire supabase client so no real network calls are made.
 // Each test configures what the mock returns via mockResolvedValueOnce.
 //
-vi.mock('../supabaseClient', () => ({
+vi.mock('./supabaseClient', () => ({
   supabase: {
     auth: {
       signInWithPassword: vi.fn(),
@@ -182,7 +182,7 @@ vi.mock('../supabaseClient', () => ({
 }));
 
 // Import the mocked supabase AFTER vi.mock so we get the spy references
-import { supabase } from '../supabaseClient';
+import { supabase } from './supabaseClient';
 
 // ─── Helper: reset all mocks before each test ──────────────────────────────────
 beforeEach(() => {

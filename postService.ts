@@ -86,11 +86,21 @@ export async function editPost(
   if (!isValidContent(newContent)) throw new Error('INVALID_CONTENT');
   if (!isWithinPostLimit(newContent)) throw new Error('CONTENT_TOO_LONG');
 
+  // First, verify that the post exists and is owned by authorId
+  const { data: postRow, error: fetchError } = await supabase
+    .from('posts')
+    .select('id, user_id')
+    .eq('id', postId)
+    .single();
+
+  if (fetchError || !postRow) throw new Error('POST_NOT_FOUND: Post does not exist.');
+  if (postRow.user_id !== authorId) throw new Error('UNAUTHORIZED: You do not own this post.');
+
+  // Now update the post
   const { error } = await supabase
     .from('posts')
     .update({ content: newContent.trim() })
-    .eq('id', postId)
-    .eq('user_id', authorId); // Ensure requester owns the post
+    .eq('id', postId);
 
   if (error) throw new Error(`EDIT_POST_ERROR: ${error.message}`);
   return true;
@@ -99,11 +109,21 @@ export async function editPost(
 // ─── deletePost ──────────────────────────────────────────────────────────────
 
 export async function deletePost(postId: string, authorId: string): Promise<boolean> {
+  // First, verify that the post exists and is owned by authorId
+  const { data: postRow, error: fetchError } = await supabase
+    .from('posts')
+    .select('id, user_id')
+    .eq('id', postId)
+    .single();
+
+  if (fetchError || !postRow) throw new Error('POST_NOT_FOUND: Post does not exist.');
+  if (postRow.user_id !== authorId) throw new Error('UNAUTHORIZED: You do not own this post.');
+
+  // Now delete the post
   const { error } = await supabase
     .from('posts')
     .delete()
-    .eq('id', postId)
-    .eq('user_id', authorId);
+    .eq('id', postId);
 
   if (error) throw new Error(`DELETE_POST_ERROR: ${error.message}`);
   return true;
@@ -189,6 +209,10 @@ export async function getLikeSummariesForPosts(
  * Fetches all comments for a post, including the author's username and PFP.
  */
 export async function getCommentsByPost(postId: string): Promise<Comment[]> {
+  if (!postId || String(postId).trim() === '') {
+    throw new Error('INVALID_POST_ID: postId is required.');
+  }
+
   const { data, error } = await supabase
     .from('comments')
     .select('*, author:profiles!author(username, avatar_url)')
