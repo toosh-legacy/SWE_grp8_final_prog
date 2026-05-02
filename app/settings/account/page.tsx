@@ -6,7 +6,7 @@ import { EMAIL_VERIFICATION_CODE_LENGTH } from "@/lib/settings/constants";
 import { validateAccountPasswordForm } from "@/lib/settings/password-validation";
 
 export default function AccountSettingsPage() {
-  const { settings, update } = useSettings();
+  const { settings, update, accountEmail } = useSettings();
   const verificationCodePattern = new RegExp(
     `^\\d{${EMAIL_VERIFICATION_CODE_LENGTH}}$`,
   );
@@ -161,7 +161,7 @@ export default function AccountSettingsPage() {
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Current:{" "}
           <span className="font-medium text-zinc-900 dark:text-zinc-100">
-            {settings.email || "Not set"}
+            {accountEmail.trim() ? accountEmail : "Not set"}
           </span>
         </p>
 

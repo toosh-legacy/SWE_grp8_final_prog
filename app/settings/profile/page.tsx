@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useSettings } from "@/components/settings/settings-provider";
 import { CAMPUSES } from "@/lib/settings/campuses";
 import { readImageAsDataUrl } from "@/lib/settings/image";
+import { supabase } from "@/supabaseClient";
 import { useEffect, useRef, useState } from "react";
 
 export default function ProfileSettingsPage() {
@@ -29,8 +30,19 @@ export default function ProfileSettingsPage() {
     setImageError(null);
     try {
       const dataUrl = await readImageAsDataUrl(file);
-      if (!mountedRef.current) return;
+      // Persist avatar even if this page unmounts immediately after file selection.
       update({ avatarDataUrl: dataUrl });
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      if (userId) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ avatar_url: dataUrl })
+          .eq("id", userId);
+        if (error) {
+          setImageError("Saved locally, but could not sync avatar to profile.");
+        }
+      }
     } catch (err) {
       if (!mountedRef.current) return;
       setImageError(err instanceof Error ? err.message : "Could not load image");
@@ -44,7 +56,7 @@ export default function ProfileSettingsPage() {
     setImageError(null);
     try {
       const dataUrl = await readImageAsDataUrl(file);
-      if (!mountedRef.current) return;
+      // Persist banner even if this page unmounts immediately after file selection.
       update({ bannerDataUrl: dataUrl });
     } catch (err) {
       if (!mountedRef.current) return;

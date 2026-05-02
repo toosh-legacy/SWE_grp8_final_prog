@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/supabaseClient';
-import { Home, Users, User, LogOut } from 'lucide-react';
+import { Home, Users, User, Settings, LogOut } from 'lucide-react';
 
 // ─── Context ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +43,7 @@ const NAV_ITEMS: { label: string; href: string; icon: React.ReactNode }[] = [
   { label: 'Home',         href: '/home',          icon: <Home size={18} strokeWidth={2} /> },
   { label: 'Study Groups', href: '/study-groups',   icon: <Users size={18} strokeWidth={2} /> },
   { label: 'Profile',      href: '/profile',        icon: <User size={18} strokeWidth={2} /> },
+  { label: 'Settings',     href: '/settings',       icon: <Settings size={18} strokeWidth={2} /> },
 ];
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -150,6 +151,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 function titleForPath(pathname: string): string {
   if (pathname.startsWith('/study-group-messages/')) return 'Study Group';
   if (pathname.startsWith('/study-groups')) return 'Study Groups';
+  if (pathname.startsWith('/settings')) return 'Settings';
   if (pathname.startsWith('/profile')) return 'Profile';
   if (pathname.startsWith('/users/')) return 'Profile';
   return 'Home';
