@@ -1757,3 +1757,224 @@ a {
   font-size: 13px;
   opacity: 0.75;
 }
+
+/* ——— Connections ——— */
+
+/* Clickable author name in post cards */
+.post-card__user-link {
+  color: #fdfdfd;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: opacity 120ms ease;
+}
+
+.post-card__user-link:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
+/* Connect / accept / decline button */
+.btn-connect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 22px;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  background: var(--dash-accent);
+  color: #fff;
+  box-shadow:
+    0 3px 0 rgb(0 0 0 / 0.2),
+    0 6px 16px rgb(217 83 45 / 0.3);
+  transition: filter 140ms ease, transform 120ms ease;
+  text-decoration: none;
+}
+
+.btn-connect:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-connect:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-connect:disabled {
+  cursor: default;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.btn-connect--pending {
+  background: var(--dash-panel);
+  color: #c8c8c8;
+  border: 1px solid #454545;
+  box-shadow: none;
+}
+
+.btn-connect--connected {
+  background: #2f7d4a;
+  cursor: default;
+  box-shadow: none;
+}
+
+.btn-connect--decline {
+  background: #4a3030;
+  color: #f2a0a0;
+  border: 1px solid #6b2222;
+  box-shadow: none;
+}
+
+.btn-connect--decline:hover:not(:disabled) {
+  background: #5e2a2a;
+  filter: none;
+}
+
+.btn-connect--sm {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+/* Row of accept + decline buttons */
+.connect-respond {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Back link on public profiles */
+.public-profile__back {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #a0a0a0;
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+
+.public-profile__back:hover {
+  color: #f4f4f4;
+}
+
+/* Pending connection requests panel */
+.connection-requests {
+  padding: clamp(20px, 3vw, 28px);
+  border-radius: 20px;
+  background: var(--dash-feed-panel);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 10px 32px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+.connection-requests__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+}
+
+.connection-requests__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #050505;
+  letter-spacing: -0.02em;
+}
+
+.connection-requests__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--dash-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.connection-requests__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Individual request row */
+.connection-request-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #d4d4d4;
+  border: 1px solid rgb(0 0 0 / 0.08);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45);
+}
+
+.connection-request-card__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.connection-request-card__link:hover .connection-request-card__name {
+  text-decoration: underline;
+}
+
+.connection-request-card__avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--dash-panel);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #fff;
+}
+
+.connection-request-card__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.connection-request-card__avatar-initials {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f4f4f4;
+}
+
+.connection-request-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connection-request-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}

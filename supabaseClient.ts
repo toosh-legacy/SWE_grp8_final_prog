@@ -57,7 +57,7 @@ function isBrowserOnSafeOrigin(): boolean {
 const missingEnvMessage =
   'Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.';
 
-export const supabase =
+export const supabase = (
   SUPABASE_URL && SUPABASE_ANON_KEY && isBrowserOnSafeOrigin()
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : ({
@@ -76,4 +76,6 @@ export const supabase =
             data: { subscription: { unsubscribe: () => {} } },
           }),
         },
-      }) as BrowserSafeSupabaseClient;
+      }) as BrowserSafeSupabaseClient
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+) as ReturnType<typeof createClient<any, any, any>>;

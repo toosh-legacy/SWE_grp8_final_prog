@@ -159,5 +159,6 @@ function titleForPath(pathname: string): string {
   if (pathname.startsWith('/study-groups')) return 'Study Groups';
   if (pathname.startsWith('/messages')) return 'Direct Messages';
   if (pathname.startsWith('/profile')) return 'Profile';
+  if (pathname.startsWith('/users/')) return 'Profile';
   return 'Home';
 }

@@ -1,14 +1,17 @@
 'use client';
 
-/**
- * ProfileView.tsx — Campus Connect
- * Updated to fetch identity from the 'public.profiles' table.
- */
-
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import type { Post } from '@/index';
 import { supabase } from '@/supabaseClient';
 import { getPostsByAuthor } from '@/postService';
+import {
+  getPendingRequests,
+  acceptConnection,
+  declineConnection,
+  getConnectionCount,
+} from '@/connectionService';
+import type { PendingRequest } from '@/connectionService';
 import { useDashboardUserId } from './DashboardLayout';
 
 interface ProfileIdentity {
@@ -29,17 +32,16 @@ const EMPTY_IDENTITY: ProfileIdentity = {
   avatarUrl: '',
 };
 
-/**
- * Maps the Database Profile and Auth User into a single Identity object.
- */
-function deriveIdentity(profile: any, authUser: any): ProfileIdentity {
+interface RawProfile { username?: string; campus?: string; bio?: string; avatar_url?: string }
+interface RawAuthUser { email?: string }
+
+function deriveIdentity(profile: RawProfile | null, authUser: RawAuthUser | null): ProfileIdentity {
   const email = authUser?.email ?? '';
   const username = profile?.username ?? '';
-  
   return {
     displayName: username || (email ? email.split('@')[0] : 'Student'),
-    username: username,
-    email: email,
+    username,
+    email,
     campus: profile?.campus ?? '',
     bio: profile?.bio ?? '',
     avatarUrl: profile?.avatar_url ?? '',
@@ -58,34 +60,38 @@ export default function ProfileView() {
 
   const [identity, setIdentity] = useState<ProfileIdentity>(EMPTY_IDENTITY);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [connectionCount, setConnectionCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    
+
     (async () => {
       if (!userId) return;
       setLoading(true);
       setError('');
 
       try {
-        // Fetch Auth User (for email) and Profile (for username/bio/pfp)
-        const [authRes, profileRes, authorPosts] = await Promise.all([
+        const [authRes, profileRes, authorPosts, pending, count] = await Promise.all([
           supabase.auth.getUser(),
           supabase.from('profiles').select('*').eq('id', userId).single(),
           getPostsByAuthor(userId),
+          getPendingRequests(userId),
+          getConnectionCount(userId),
         ]);
 
         if (cancelled) return;
-
         if (profileRes.error) throw profileRes.error;
 
         setIdentity(deriveIdentity(profileRes.data, authRes.data?.user));
         setPosts(authorPosts);
-      } catch (err: any) {
+        setPendingRequests(pending);
+        setConnectionCount(count);
+      } catch (err) {
         if (!cancelled) {
-          console.error("Profile Load Error:", err);
+          console.error('Profile Load Error:', err);
           setError('Could not load profile information.');
         }
       } finally {
@@ -93,10 +99,27 @@ export default function ProfileView() {
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [userId]);
+
+  async function handleAccept(req: PendingRequest) {
+    try {
+      await acceptConnection(req.connectionId);
+      setPendingRequests((prev) => prev.filter((r) => r.connectionId !== req.connectionId));
+      setConnectionCount((n) => n + 1);
+    } catch {
+      setError('Could not accept request.');
+    }
+  }
+
+  async function handleDecline(req: PendingRequest) {
+    try {
+      await declineConnection(req.connectionId);
+      setPendingRequests((prev) => prev.filter((r) => r.connectionId !== req.connectionId));
+    } catch {
+      setError('Could not decline request.');
+    }
+  }
 
   const initials = useMemo(() => initialsOf(identity.displayName), [identity.displayName]);
   const subtitle = identity.username ? `@${identity.username}` : '';
@@ -117,14 +140,14 @@ export default function ProfileView() {
             {identity.displayName}
           </h2>
           {subtitle && <p className="profile-header__subtitle">{subtitle}</p>}
-          
+
           {identity.campus && (
             <p className="profile-header__meta">
               <span aria-hidden className="profile-header__meta-icon">📍</span>
               {identity.campus}
             </p>
           )}
-          
+
           {identity.bio && <p className="profile-header__bio">{identity.bio}</p>}
 
           <div className="profile-stats" role="list">
@@ -133,16 +156,60 @@ export default function ProfileView() {
               <span className="profile-stat__label">Posts</span>
             </div>
             <div className="profile-stat" role="listitem">
-              <span className="profile-stat__value">—</span>
+              <span className="profile-stat__value">{loading ? '—' : connectionCount}</span>
               <span className="profile-stat__label">Connections</span>
-            </div>
-            <div className="profile-stat" role="listitem">
-              <span className="profile-stat__value">—</span>
-              <span className="profile-stat__label">Groups</span>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Pending connection requests */}
+      {pendingRequests.length > 0 && (
+        <section className="connection-requests" aria-label="Pending connection requests">
+          <header className="connection-requests__header">
+            <h3 className="connection-requests__title">Connection Requests</h3>
+            <span className="connection-requests__badge">{pendingRequests.length}</span>
+          </header>
+          <ul className="connection-requests__list" role="list">
+            {pendingRequests.map((req) => (
+              <li key={req.connectionId} className="connection-request-card">
+                <Link href={`/users/${req.requesterId}`} className="connection-request-card__link">
+                  <div className="connection-request-card__avatar" aria-hidden>
+                    {req.requesterAvatar ? (
+                      <img
+                        src={req.requesterAvatar}
+                        alt=""
+                        className="connection-request-card__avatar-img"
+                      />
+                    ) : (
+                      <span className="connection-request-card__avatar-initials">
+                        {initialsOf(req.requesterName)}
+                      </span>
+                    )}
+                  </div>
+                  <span className="connection-request-card__name">{req.requesterName}</span>
+                </Link>
+                <div className="connection-request-card__actions">
+                  <button
+                    type="button"
+                    className="btn-connect btn-connect--sm"
+                    onClick={() => handleAccept(req)}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-connect btn-connect--decline btn-connect--sm"
+                    onClick={() => handleDecline(req)}
+                  >
+                    Decline
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="profile-posts" aria-label="Your posts">
         <header className="profile-posts__header">
@@ -165,7 +232,6 @@ export default function ProfileView() {
               <ProfilePostCard
                 key={post.postId}
                 post={post}
-                // Use the data already in the post object (from our service join)
                 authorName={post.authorName}
                 authorPFP={post.authorPFP}
               />
@@ -177,13 +243,19 @@ export default function ProfileView() {
   );
 }
 
-// ─── Sub-component ────────────────────────────────────────────────────────────
-
-function ProfilePostCard({ post, authorName, authorPFP }: { post: Post; authorName: string; authorPFP: string | null }) {
+function ProfilePostCard({
+  post,
+  authorName,
+  authorPFP,
+}: {
+  post: Post;
+  authorName: string;
+  authorPFP: string | null;
+}) {
   const formattedDate = new Date(post.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 
   return (
@@ -191,7 +263,12 @@ function ProfilePostCard({ post, authorName, authorPFP }: { post: Post; authorNa
       <div className="post-card__header">
         <div className="post-card__author">
           {authorPFP ? (
-            <img src={authorPFP} alt="" className="post-card__avatar-img" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+            <img
+              src={authorPFP}
+              alt=""
+              className="post-card__avatar-img"
+              style={{ width: '24px', height: '24px', borderRadius: '50%' }}
+            />
           ) : (
             <span className="post-card__avatar" aria-hidden />
           )}

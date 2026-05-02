@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import type { Post, FeedCategory, CampusEvent } from '@/index';
 import { getNextUpcomingEvents, EVENT_FEED_TAB_LIMIT } from '@/eventService';
 import {
@@ -333,7 +334,9 @@ function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
           ) : (
             <span className="post-card__avatar" aria-hidden />
           )}
-          <span className="post-card__user-label">{post.authorName}</span>
+          <Link href={`/users/${post.authorId}`} className="post-card__user-label post-card__user-link">
+            {post.authorName}
+          </Link>
           <time className="post-card__date" dateTime={post.createdAt}>
             <span className="post-card__date-text">{when}</span>
           </time>
