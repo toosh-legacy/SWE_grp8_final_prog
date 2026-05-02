@@ -156,6 +156,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 // ─── Helpers ─────────────────────────────────────────────────────────────────────
 
 function titleForPath(pathname: string): string {
+  if (pathname.startsWith('/study-group-messages/')) return 'Study Group';
   if (pathname.startsWith('/study-groups')) return 'Study Groups';
   if (pathname.startsWith('/messages')) return 'Direct Messages';
   if (pathname.startsWith('/profile')) return 'Profile';
