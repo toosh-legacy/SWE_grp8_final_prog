@@ -1,13 +1,5 @@
-import { StudyGroupClient } from "./chatClient";
-import { StudyGroupMessageController } from "./studyGroupMessgeController";
-
-// Start server
-const PORT = 9998;
-new StudyGroupMessageController(PORT);
-
-console.log(`Server running on ws://localhost:${PORT}`);
-
-/** 
+export {};
+/**
 // Small delay to ensure server is up before clients connect
 setTimeout(() => {
     // Create clients
@@ -47,4 +39,5 @@ setTimeout(() => {
     ///}, 5000);
 
 }, 500);
-*/
+*/ 
+//# sourceMappingURL=index.d.ts.map
