@@ -40,6 +40,14 @@ export function isValidCapacity(capacity: number | null | undefined): boolean {
   return Number.isInteger(capacity) && capacity > 0;
 }
 
+/** Default number of upcoming events shown beside the home feed. */
+export const SIDEBAR_UPCOMING_EVENTS_LIMIT = 3;
+
+/** Max upcoming events loaded for the Events tab (and search pool). */
+export const EVENT_FEED_TAB_LIMIT = 200;
+
+const MAX_EVENT_DESCRIPTION_LENGTH = 250;
+
 // ─── publish() : Boolean ──────────────────────────────────────────────────────
 
 /**
@@ -48,13 +56,17 @@ export function isValidCapacity(capacity: number | null | undefined): boolean {
  *                 startTime is a future date.
  *                 capacity is a positive integer.
  * Post-condition: Event saved in the database. Returns the created CampusEvent.
+ *
+ * When `description` is passed, it is persisted as `events.description` (add a nullable
+ * `description` text column in Supabase if missing). Omitted in tests / legacy callers.
  */
 export async function publishEvent(
   organizerId: string,
   title: string,
   location: string,
   startTime: string,
-  capacity: number
+  capacity: number,
+  description?: string
 ): Promise<CampusEvent> {
   if (!organizerId || String(organizerId).trim() === '') {
     throw new Error('INVALID_ORGANIZER: organizerId is required.');
@@ -72,22 +84,96 @@ export async function publishEvent(
     throw new Error('INVALID_CAPACITY: Capacity must be a positive integer.');
   }
 
+  if (description !== undefined) {
+    const d = String(description).trim();
+    if (!d) {
+      throw new Error('INVALID_DESCRIPTION: Event description cannot be empty.');
+    }
+    if (d.length > MAX_EVENT_DESCRIPTION_LENGTH) {
+      throw new Error(
+        `DESCRIPTION_TOO_LONG: Description must be ${MAX_EVENT_DESCRIPTION_LENGTH} characters or fewer.`
+      );
+    }
+  }
+
+  const baseRow = {
+    organizer_id: organizerId,
+    title:        title.trim(),
+    location:     location.trim(),
+    start_time:   startTime,
+    capacity,
+    is_cancelled: false,
+  };
+  const row =
+    description !== undefined
+      ? { ...baseRow, description: String(description).trim() }
+      : baseRow;
+
   const { data, error } = await supabase
     .from('events')
-    .insert({
-      organizer_id: organizerId,
-      title:        title.trim(),
-      location:     location.trim(),
-      start_time:   startTime,
-      capacity,
-      is_cancelled: false,
-    })
+    .insert(row)
     .select()
     .single();
 
   if (error) throw new Error(`PUBLISH_EVENT_ERROR: ${error.message}`);
 
-  return mapToEvent(data);
+  return mapToEvent(data as Record<string, unknown>);
+}
+
+// ─── upcoming list (feed sidebar & Events tab) ─────────────────────────────────
+
+/**
+ * Next `limit` non-cancelled events with start_time strictly in the future (≥ now UTC),
+ * soonest first. Aligns with events created via Publish Event / Events tab (`events` table).
+ */
+export async function getNextUpcomingEvents(
+  limit: number = SIDEBAR_UPCOMING_EVENTS_LIMIT
+): Promise<CampusEvent[]> {
+  const n =
+    typeof limit === 'number' &&
+    Number.isInteger(limit) &&
+    limit >= 1 &&
+    limit <= EVENT_FEED_TAB_LIMIT
+      ? limit
+      : SIDEBAR_UPCOMING_EVENTS_LIMIT;
+
+  const nowISO = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('is_cancelled', false)
+    .gte('start_time', nowISO)
+    .order('start_time', { ascending: true })
+    .limit(n);
+
+  if (error) throw new Error(`LIST_UPCOMING_EVENTS_ERROR: ${error.message}`);
+  return (data ?? []).map((row: unknown) =>
+    mapToEvent(row as Record<string, unknown>)
+  );
+}
+
+/**
+ * Upcoming events whose title, location, or description contains the query (case-insensitive).
+ * Uses a bounded load from `getNextUpcomingEvents` then filters in memory.
+ */
+export async function searchUpcomingEvents(
+  query: string,
+  maxResults: number = 50
+): Promise<CampusEvent[]> {
+  if (!query || String(query).trim() === '') {
+    throw new Error('INVALID_QUERY: Search query cannot be empty.');
+  }
+  const q = query.trim().toLowerCase();
+  const cap = Math.min(Math.max(maxResults, 1), EVENT_FEED_TAB_LIMIT);
+  const pool = await getNextUpcomingEvents(EVENT_FEED_TAB_LIMIT);
+  return pool
+    .filter((e) => {
+      const inTitle = e.title.toLowerCase().includes(q);
+      const inLoc = e.location.toLowerCase().includes(q);
+      const inDesc = (e.description ?? '').toLowerCase().includes(q);
+      return inTitle || inLoc || inDesc;
+    })
+    .slice(0, cap);
 }
 
 // ─── cancel(reason) : Boolean ─────────────────────────────────────────────────
@@ -234,15 +320,27 @@ export async function getAttendees(eventId: string): Promise<Student[]> {
 
 // ─── Internal Mapper ──────────────────────────────────────────────────────────
 
-function mapToEvent(d: Record<string, any>): CampusEvent {
+function mapToEvent(d: Record<string, unknown>): CampusEvent {
+  const r = d as {
+    id: string;
+    organizer_id: string;
+    title: string;
+    location: string;
+    start_time: string;
+    capacity: number;
+    is_cancelled: boolean;
+    cancel_reason?: string | null;
+    description?: string | null;
+  };
   return {
-    eventId:      d.id,
-    organizerId:  d.organizer_id,
-    title:        d.title,
-    location:     d.location,
-    startTime:    d.start_time,
-    capacity:     d.capacity,
-    isCancelled:  d.is_cancelled,
-    cancelReason: d.cancel_reason ?? undefined,
+    eventId:      r.id,
+    organizerId:  r.organizer_id,
+    title:        r.title,
+    location:     r.location,
+    startTime:    r.start_time,
+    capacity:     r.capacity,
+    isCancelled:  r.is_cancelled,
+    cancelReason: r.cancel_reason ?? undefined,
+    description:  r.description != null && r.description !== '' ? r.description : undefined,
   };
 }

@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * DashboardLayout.tsx — Campus Connect
+ * Authenticated App Shell (sidebar, masthead, main outlet)
+ *
+ * Gates dashboard routes on Supabase session; redirects unauthenticated users to /login.
+ * Exposes `useDashboardUserId` for child pages that need the current user id.
+ */
+
 import React, {
   createContext,
   useContext,
@@ -9,7 +17,11 @@ import React, {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+
 import { supabase } from '@/supabaseClient';
+
+// ─── Context & hook ────────────────────────────────────────────────────────────
 
 const DashboardUserContext = createContext<string | undefined>(undefined);
 
@@ -20,9 +32,13 @@ export function useDashboardUserId(): string {
   return id;
 }
 
+// ─── Props ─────────────────────────────────────────────────────────────────────
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
+
+// ─── Constants ───────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS: { label: string; href: string }[] = [
   { label: 'Home', href: '/home' },
@@ -31,11 +47,15 @@ const NAV_ITEMS: { label: string; href: string }[] = [
   { label: 'Profile', href: '/profile' },
 ];
 
+// ─── Component ─────────────────────────────────────────────────────────────────
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+
+  // ── Auth: session load + listener ────────────────────────────────────────────
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +81,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     })();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: AuthChangeEvent, session: Session | null) => {
         applySession(session);
       }
     );
@@ -71,6 +91,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       authListener.subscription.unsubscribe();
     };
   }, [router]);
+
+  // ── Early returns ────────────────────────────────────────────────────────────
 
   if (!ready)
     return (
@@ -82,6 +104,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   if (!userId) return null;
 
   const pageHeading = pageTitleForPath(pathname);
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <DashboardUserContext.Provider value={userId}>
@@ -141,6 +165,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </DashboardUserContext.Provider>
   );
 }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────────
 
 function pageTitleForPath(pathname: string): string {
   if (pathname.startsWith('/study-groups')) return 'Study Groups';

@@ -58,6 +58,8 @@ export interface CampusEvent {
   capacity: number;       // positive integer
   isCancelled: boolean;
   cancelReason?: string;
+  /** Optional body text; stored in `events.description` when the column exists. */
+  description?: string;
 }
 
 // ─── Authentication Session (DCD: Authentication class) ───────────────────────

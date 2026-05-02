@@ -44,17 +44,25 @@ export function isValidCategory(type: string | null | undefined): type is FeedCa
   return (VALID_FEED_CATEGORIES as string[]).includes(type);
 }
 
+/** Values stored in `posts.section`. Events use the `events` table only. */
+export type PostsTableCategory = Extract<FeedCategory, 'general' | 'announcement'>;
+
+export function isPostsTableCategory(type: string | null | undefined): type is PostsTableCategory {
+  return type === 'general' || type === 'announcement';
+}
+
 // ─── create(content, type) : Post ─────────────────────────────────────────────
 
 /**
  * Pre-condition : authorId references an authenticated user.
- *                 content is non-empty and ≤ 250 chars. type is a valid FeedCategory.
- * Post-condition: Post saved to database; returned Post object matches the DCD.
+ *                 content is non-empty and ≤ 250 chars. type is general or announcement.
+ * Post-condition: Row inserted into `posts` with `section` equal to type.
+ *                Events must be created via `eventService.publishEvent`, not here.
  */
 export async function createPost(
   authorId: string,
   content: string,
-  type: FeedCategory
+  type: PostsTableCategory
 ): Promise<Post> {
   if (!authorId || String(authorId).trim() === '') {
     throw new Error('INVALID_AUTHOR: authorId is required.');
@@ -67,9 +75,9 @@ export async function createPost(
       `CONTENT_TOO_LONG: Post must be ${MAX_POST_LENGTH} characters or fewer.`
     );
   }
-  if (!isValidCategory(type)) {
+  if (!isPostsTableCategory(type)) {
     throw new Error(
-      'INVALID_TYPE: Post type must be "general", "announcement", or "event".'
+      'INVALID_TYPE: Only "general" and "announcement" are stored in posts. Use publishEvent for events.'
     );
   }
 
@@ -162,11 +170,11 @@ export async function deletePost(
   return true;
 }
 
-// ─── like(studentId) : Boolean ────────────────────────────────────────────────
+// ─── like / unlike (toggle) ───────────────────────────────────────────────────
 
 /**
- * Pre-condition : postId exists. Student has not already liked this post.
- * Post-condition: Like recorded in database. Returns true.
+ * Toggles the viewer's like on a post: adds a like if absent, removes it if present.
+ * @returns `true` if the post is liked after this call, `false` if the like was removed.
  */
 export async function likePost(
   postId: string,
@@ -179,15 +187,22 @@ export async function likePost(
     throw new Error('INVALID_STUDENT_ID: studentId is required.');
   }
 
-  // Check for duplicate like
   const { data: existing } = await supabase
     .from('post_likes')
     .select('post_id')
     .eq('post_id', postId)
     .eq('user_id', studentId)
-    .single();
+    .maybeSingle();
 
-  if (existing) throw new Error('ALREADY_LIKED: You have already liked this post.');
+  if (existing) {
+    const { error } = await supabase
+      .from('post_likes')
+      .delete()
+      .eq('post_id', postId)
+      .eq('user_id', studentId);
+    if (error) throw new Error(`UNLIKE_POST_ERROR: ${error.message}`);
+    return false;
+  }
 
   const { error } = await supabase.from('post_likes').insert({
     post_id: postId,
@@ -304,13 +319,18 @@ export async function getCommentsForPost(postId: string): Promise<Comment[]> {
 // ─── getFeedByCategory (FR8a, FR8c) ───────────────────────────────────────────
 
 /**
- * Pre-condition : category is one of 'general' | 'announcement' | 'event'.
+ * Pre-condition : category is general or announcement (events use `events` table).
  * Post-condition: Returns all posts in that category, sorted newest-first (FR8c).
  */
 export async function getFeedByCategory(category: string): Promise<Post[]> {
   if (!isValidCategory(category)) {
     throw new Error(
       'INVALID_CATEGORY: Category must be "general", "announcement", or "event".'
+    );
+  }
+  if (category === 'event') {
+    throw new Error(
+      'INVALID_CATEGORY: Events are stored in the events table — use eventService.getNextUpcomingEvents.'
     );
   }
 
@@ -338,6 +358,12 @@ export async function searchFeed(
 ): Promise<Post[]> {
   if (!query || String(query).trim() === '') {
     throw new Error('INVALID_QUERY: Search query cannot be empty.');
+  }
+
+  if (category === 'event') {
+    throw new Error(
+      'INVALID_CATEGORY: Events are stored in the events table — use eventService.searchUpcomingEvents.'
+    );
   }
 
   let builder = supabase

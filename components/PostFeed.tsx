@@ -4,13 +4,14 @@
  * PostFeed.tsx — Campus Connect
  * Public Feed Page
  *
- * Covers FR8a (feed sections), FR8b (search), FR8c (sort by date), FR8d (like/comment)
- * Calls postService and eventService from the service layer.
+ * Covers FR8a (feed sections), FR8b (search), FR8c (sort by date), FR8d (like/comment).
+ * Calls postService for general/announcement posts; Events tab reads the `events` table via eventService.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { FormEvent } from 'react';
-import type { Post, FeedCategory, Comment } from '@/index';
+import type { Post, FeedCategory, Comment, CampusEvent } from '@/index';
+import { getNextUpcomingEvents, searchUpcomingEvents, EVENT_FEED_TAB_LIMIT } from '@/eventService';
 import {
   getFeedByCategory,
   searchFeed,
@@ -29,12 +30,12 @@ interface PostFeedProps {
   currentUserId: string;
 }
 
-// ─── Tab config ────────────────────────────────────────────────────────────────
+// ─── Tab & feed config ─────────────────────────────────────────────────────────
 
 const TABS: { label: string; value: FeedCategory }[] = [
-  { label: 'General',       value: 'general'      },
-  { label: 'Events',        value: 'event'         },
-  { label: 'Announcements', value: 'announcement'  },
+  { label: 'General', value: 'general' },
+  { label: 'Events', value: 'event' },
+  { label: 'Announcements', value: 'announcement' },
 ];
 
 /** Display name for empty-state copy (matches tab labels). */
@@ -43,6 +44,8 @@ const TAB_SECTION_LABEL: Record<FeedCategory, string> = {
   event: 'Events',
   announcement: 'Announcements',
 };
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Merge like counts / liked-by-me flags into feed posts for the current viewer. */
 async function withLikeSummaries(postList: Post[], viewerId: string): Promise<Post[]> {
@@ -59,6 +62,18 @@ async function withLikeSummaries(postList: Post[], viewerId: string): Promise<Po
 }
 
 function emptyFeedMessage(tab: FeedCategory, isSearching: boolean, query: string) {
+  if (tab === 'event') {
+    if (isSearching) {
+      return {
+        title: 'No events to display',
+        detail: `No upcoming events matched your search${query ? ` for "${query}"` : ''}.`,
+      };
+    }
+    return {
+      title: 'No upcoming events',
+      detail: `There are no upcoming events in the Events tab right now.`,
+    };
+  }
   if (isSearching) {
     return {
       title: 'No posts to display',
@@ -71,39 +86,48 @@ function emptyFeedMessage(tab: FeedCategory, isSearching: boolean, query: string
   };
 }
 
-// =============================================================================
-// PostFeed Component
-// =============================================================================
+// ─── PostFeed (main) ───────────────────────────────────────────────────────────
 
 export default function PostFeed({ currentUserId }: PostFeedProps) {
-  const [activeTab,    setActiveTab]    = useState<FeedCategory>('general');
-  const [posts,        setPosts]        = useState<Post[]>([]);
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState('');
-  const [searchQuery,  setSearchQuery]  = useState('');
-  const [isSearching,  setIsSearching]  = useState(false);
-  const [showCreate,   setShowCreate]   = useState(false);
+  const [activeTab, setActiveTab] = useState<FeedCategory>('general');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [feedEvents, setFeedEvents] = useState<CampusEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
 
-  // ── Fetch posts when tab changes ─────────────────────────────────────────────
+  // ── Fetch: load feed by tab ─────────────────────────────────────────────────
 
-  const loadFeed = useCallback(async (category: FeedCategory) => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await getFeedByCategory(category);
-      setPosts(await withLikeSummaries(data, currentUserId));
-    } catch (err: unknown) {
-      console.error('Failed to load feed:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUserId]);
+  const loadFeed = useCallback(
+    async (category: FeedCategory) => {
+      setLoading(true);
+      setError('');
+      try {
+        if (category === 'event') {
+          setPosts([]);
+          const evs = await getNextUpcomingEvents(EVENT_FEED_TAB_LIMIT);
+          setFeedEvents(evs);
+        } else {
+          setFeedEvents([]);
+          const data = await getFeedByCategory(category);
+          setPosts(await withLikeSummaries(data, currentUserId));
+        }
+      } catch (err: unknown) {
+        console.error('Failed to load feed:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentUserId]
+  );
 
   useEffect(() => {
     if (!isSearching) loadFeed(activeTab);
   }, [activeTab, isSearching, loadFeed]);
 
-  // ── Search ───────────────────────────────────────────────────────────────────
+  // ── Search ────────────────────────────────────────────────────────────────────
 
   async function handleSearch(e: FormEvent) {
     e.preventDefault();
@@ -116,9 +140,18 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
     setError('');
     setIsSearching(true);
     try {
-      const results = await searchFeed(searchQuery.trim(), activeTab);
-      setPosts(await withLikeSummaries(results, currentUserId));
-    } catch (err: any) {
+      if (activeTab === 'event') {
+        setPosts([]);
+        const results = await searchUpcomingEvents(
+          searchQuery.trim(),
+          EVENT_FEED_TAB_LIMIT
+        );
+        setFeedEvents(results);
+      } else {
+        const results = await searchFeed(searchQuery.trim(), activeTab);
+        setPosts(await withLikeSummaries(results, currentUserId));
+      }
+    } catch {
       setError('Search failed. Please try again.');
     } finally {
       setLoading(false);
@@ -131,30 +164,28 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
     loadFeed(activeTab);
   }
 
-  // ── Like ─────────────────────────────────────────────────────────────────────
+  // ── Like / delete ─────────────────────────────────────────────────────────────
 
   async function handleLike(postId: string) {
     try {
-      await likePost(postId, currentUserId);
+      const nowLiked = await likePost(postId, currentUserId);
       setPosts((prev) =>
-        prev.map((p) =>
-          p.postId === postId
-            ? {
-                ...p,
-                likeCount: (p.likeCount ?? 0) + 1,
-                likedByMe: true,
-              }
-            : p
-        )
+        prev.map((p) => {
+          if (p.postId !== postId) return p;
+          const was = p.likedByMe ?? false;
+          let count = p.likeCount ?? 0;
+          if (!was && nowLiked) count += 1;
+          if (was && !nowLiked) count -= 1;
+          return {
+            ...p,
+            likedByMe: nowLiked,
+            likeCount: Math.max(0, count),
+          };
+        })
       );
-    } catch (err: any) {
-      if (err.message?.includes('ALREADY_LIKED')) {
-        setPosts((prev) =>
-          prev.map((p) => (p.postId === postId ? { ...p, likedByMe: true } : p))
-        );
-        return;
-      }
-      setError('Could not like post. Please try again.');
+    } catch (err: unknown) {
+      console.error('Like toggle failed:', err);
+      setError('Could not update like. Please try again.');
     }
   }
 
@@ -168,10 +199,9 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
     }
   }
 
-  // ── Post created callback ────────────────────────────────────────────────────
+  // ── Post created callback ─────────────────────────────────────────────────────
 
   function handlePostCreated(newPost: Post) {
-    // Prepend new post to the top of the feed (FR8c: newest first)
     if (newPost.type === activeTab) {
       const enriched: Post = {
         ...newPost,
@@ -183,12 +213,19 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
     setShowCreate(false);
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  function handleEventCreated(ev: CampusEvent) {
+    setFeedEvents((prev) =>
+      activeTab === 'event' ? [ev, ...prev.filter((e) => e.eventId !== ev.eventId)] : prev
+    );
+    setShowCreate(false);
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div className="home-hub">
       <div className="home-hub__feed">
-        {/* Header */}
+        {/* Header: title, search, new post */}
         <div className="feed-header">
           <h2 className="feed-title">Feed</h2>
           <form className="feed-search" onSubmit={handleSearch} role="search">
@@ -235,7 +272,7 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
           </button>
         </div>
 
-        {/* Category Tabs */}
+        {/* Category tabs */}
         <nav className="feed-tabs" role="tablist">
           {TABS.map((tab) => (
             <button
@@ -254,26 +291,33 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
           ))}
         </nav>
 
-        {/* Create Post Panel */}
+        {/* Create post panel */}
         {showCreate && (
           <div className="create-post-panel">
             <CreatePostForm
               authorId={currentUserId}
-              defaultType={activeTab === 'event' ? 'event' : activeTab === 'announcement' ? 'announcement' : 'general'}
+              defaultType={
+                activeTab === 'event'
+                  ? 'event'
+                  : activeTab === 'announcement'
+                    ? 'announcement'
+                    : 'general'
+              }
               onPostCreated={handlePostCreated}
+              onEventCreated={handleEventCreated}
               onCancel={() => setShowCreate(false)}
             />
           </div>
         )}
 
-        {/* Search context label */}
+        {/* Search context */}
         {isSearching && (
           <p className="feed-search-label">
             Showing results for &ldquo;<strong>{searchQuery}</strong>&rdquo;
           </p>
         )}
 
-        {/* Error Banner */}
+        {/* Error banner */}
         {error && (
           <div className="error-banner" role="alert">
             {error}
@@ -281,9 +325,25 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
         )}
 
         <div className="feed-page">
-          {/* Feed Content */}
+          {/* Post list or empty / loading */}
           {loading ? (
-            <div className="feed-loading" aria-live="polite">Loading posts…</div>
+            <div className="feed-loading" aria-live="polite">
+              Loading…
+            </div>
+          ) : activeTab === 'event' ? (
+            feedEvents.length === 0 ? (
+              <FeedEmptyState
+                tab={activeTab}
+                isSearching={isSearching}
+                searchQuery={searchQuery}
+              />
+            ) : (
+              <ul className="post-list" role="list">
+                {feedEvents.map((ev) => (
+                  <EventFeedCard key={ev.eventId} ev={ev} />
+                ))}
+              </ul>
+            )
           ) : posts.length === 0 ? (
             <FeedEmptyState
               tab={activeTab}
@@ -306,24 +366,7 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
         </div>
       </div>
 
-      <aside className="home-hub__events" aria-label="Upcoming events preview">
-        <h3 className="home-hub__events-title sr-only">Events calendar</h3>
-        <ul className="event-preview-list">
-          <li className="event-preview-card">
-            <span className="event-preview-card__date">APRIL 5</span>
-            <span className="event-preview-card__title">Event 1</span>
-          </li>
-          <li className="event-preview-card">
-            <span className="event-preview-card__date">APRIL 6</span>
-            <span className="event-preview-card__title">Event 2</span>
-          </li>
-          <li className="event-preview-card">
-            <span className="event-preview-card__date">APRIL 7</span>
-            <span className="event-preview-card__title">Event 3</span>
-          </li>
-        </ul>
-      </aside>
-
+      {/* Mobile FAB */}
       <div className="feed-fab-slot">
         <span className="feed-fab-label">Create Post</span>
         <button
@@ -342,9 +385,46 @@ export default function PostFeed({ currentUserId }: PostFeedProps) {
   );
 }
 
-// =============================================================================
-// FeedEmptyState
-// =============================================================================
+// ─── EventFeedCard (`events` table — no likes/comments row) ────────────────────
+
+function EventFeedCard({ ev }: { ev: CampusEvent }) {
+  const formattedStart = new Date(ev.startTime).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <li className="post-card post-card--event-feed" aria-label={`Event: ${ev.title}`}>
+      <div className="post-card__header">
+        <div className="post-card__author">
+          <span className="post-card__avatar" aria-hidden />
+          <span className="post-card__user-label">Event</span>
+          <time className="post-card__date" dateTime={ev.startTime}>
+            <span className="post-card__date-text">{formattedStart}</span>
+          </time>
+        </div>
+      </div>
+      <div className="post-card__body">
+        <p className="post-card__content post-card__event-feed-title">{ev.title}</p>
+        {ev.description ? (
+          <p className="post-card__content post-card__event-feed-desc">{ev.description}</p>
+        ) : null}
+        <p className="post-card__event-feed-meta">
+          <span>{ev.location}</span>
+          {' · '}
+          <span>
+            {ev.capacity} attendee{ev.capacity === 1 ? '' : 's'} max
+          </span>
+        </p>
+      </div>
+    </li>
+  );
+}
+
+// ─── FeedEmptyState ────────────────────────────────────────────────────────────
 
 function FeedEmptyState({
   tab,
@@ -364,9 +444,7 @@ function FeedEmptyState({
   );
 }
 
-// =============================================================================
-// PostCard Sub-component
-// =============================================================================
+// ─── PostCard ──────────────────────────────────────────────────────────────────
 
 interface PostCardProps {
   post: Post;
@@ -376,6 +454,8 @@ interface PostCardProps {
 }
 
 function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
+  // ── Local state ───────────────────────────────────────────────────────────────
+
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -384,15 +464,17 @@ function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
 
   const formattedDate = new Date(post.createdAt).toLocaleDateString('en-US', {
     month: 'short',
-    day:   'numeric',
-    year:  'numeric',
-    hour:  '2-digit',
-    minute:'2-digit',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
   const isOwner = post.authorId === currentUserId;
   const likes = post.likeCount ?? 0;
   const liked = !!post.likedByMe;
+
+  // ── Comment panel ───────────────────────────────────────────────────────────
 
   async function toggleComments() {
     const next = !commentsOpen;
@@ -426,6 +508,8 @@ function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
       setCommentSubmitting(false);
     }
   }
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <li className="post-card" aria-label={`Post by ${post.authorId}`}>
@@ -467,8 +551,7 @@ function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
               type="button"
               className={`post-card__icon-action post-card__like ${liked ? 'post-card__like--active' : ''}`}
               onClick={onLike}
-              disabled={liked}
-              aria-label={liked ? 'You liked this post' : 'Thumbs up this post'}
+              aria-label={liked ? 'Remove your like from this post' : 'Like this post'}
               aria-pressed={liked}
             >
               <svg
@@ -530,10 +613,7 @@ function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
         )}
 
         {commentsOpen && (
-          <section
-            className="post-card__comments"
-            aria-label="Comments"
-          >
+          <section className="post-card__comments" aria-label="Comments">
             {commentsLoading ? (
               <p className="post-card__comments-status">Loading comments…</p>
             ) : comments.length === 0 ? (
@@ -546,10 +626,7 @@ function PostCard({ post, currentUserId, onLike, onDelete }: PostCardProps) {
                       <span className="post-card__comment-author">
                         {c.authorId === currentUserId ? 'You' : 'User'}
                       </span>
-                      <time
-                        className="post-card__comment-time"
-                        dateTime={c.createdAt}
-                      >
+                      <time className="post-card__comment-time" dateTime={c.createdAt}>
                         {new Date(c.createdAt).toLocaleString('en-US', {
                           month: 'short',
                           day: 'numeric',

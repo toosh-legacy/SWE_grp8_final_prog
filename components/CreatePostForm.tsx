@@ -5,13 +5,13 @@
  * Create Post / Event Form Component
  *
  * Covers FR8 (publish content), FR8a (section selection), FR18 (events).
- * Calls postService.createPost and eventService.publishEvent.
+ * Calls postService.createPost for general/announcements and eventService.publishEvent for events.
  */
 
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Post, FeedCategory, CampusEvent } from '@/index';
-import { createPost, MAX_POST_LENGTH } from '@/postService';
+import { createPost, isPostsTableCategory, MAX_POST_LENGTH } from '@/postService';
 import { publishEvent } from '@/eventService';
 
 
@@ -20,9 +20,9 @@ import { publishEvent } from '@/eventService';
 interface CreatePostFormProps {
   authorId: string;
   defaultType?: FeedCategory;
-  onPostCreated:  (post: Post) => void;
+  onPostCreated: (post: Post) => void;
   onEventCreated?: (event: CampusEvent) => void;
-  onCancel:       () => void;
+  onCancel: () => void;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -80,20 +80,20 @@ export default function CreatePostForm({
     setLoading(true);
     try {
       if (isEventMode) {
-        // Create both the post (for the feed) and the event record
-        const [post, event] = await Promise.all([
-          createPost(authorId, content, 'event'),
-          publishEvent(
-            authorId,
-            eventTitle,
-            eventLocation,
-            new Date(eventDate).toISOString(),
-            Number(eventCapacity)
-          ),
-        ]);
-        onPostCreated(post);
+        const event = await publishEvent(
+          authorId,
+          eventTitle,
+          eventLocation,
+          new Date(eventDate).toISOString(),
+          Number(eventCapacity),
+          content.trim()
+        );
         onEventCreated?.(event);
       } else {
+        if (!isPostsTableCategory(type)) {
+          setError('Choose General or Announcement for a feed post.');
+          return;
+        }
         const post = await createPost(authorId, content, type);
         onPostCreated(post);
       }
