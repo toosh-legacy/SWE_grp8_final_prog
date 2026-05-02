@@ -11,7 +11,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Post, FeedCategory, CampusEvent } from '@/index';
-import { createPost, isPostsTableCategory, MAX_POST_LENGTH } from '@/postService';
+import { createPost, MAX_POST_LENGTH } from '@/postService';
 import { publishEvent } from '@/eventService';
 
 
@@ -31,7 +31,6 @@ export default function CreatePostForm({
   authorId,
   defaultType = 'general',
   onPostCreated,
-  onEventCreated,
   onCancel,
 }: CreatePostFormProps) {
   // Shared state
@@ -40,13 +39,13 @@ export default function CreatePostForm({
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
 
-  // Event-specific state (only used when type === 'event')
+  // Event-specific state
   const [eventTitle,    setEventTitle]    = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [eventDate,     setEventDate]     = useState('');
   const [eventCapacity, setEventCapacity] = useState<number | ''>('');
 
-  const isEventMode  = type === 'event';
+  const isEventMode  = type === 'events'; // Make sure this matches your FeedCategory type exactly!
   const charCount    = content.length;
   const charRemaining = MAX_POST_LENGTH - charCount;
   const isOverLimit   = charCount > MAX_POST_LENGTH;
@@ -61,7 +60,7 @@ export default function CreatePostForm({
       if (!eventTitle.trim())    return 'Event title is required.';
       if (!eventLocation.trim()) return 'Event location is required.';
       if (!eventDate)            return 'Event date/time is required.';
-      if (!eventCapacity || Number(eventCapacity) <= 0)
+      if (eventCapacity !== '' && Number(eventCapacity) <= 0)
         return 'Event capacity must be a positive number.';
     }
 
@@ -79,26 +78,23 @@ export default function CreatePostForm({
 
     setLoading(true);
     try {
+      let metadata = undefined;
+
+      // If it's an event, package the details into the JSONB object
       if (isEventMode) {
-        const event = await publishEvent(
-          authorId,
-          eventTitle,
-          eventLocation,
-          new Date(eventDate).toISOString(),
-          Number(eventCapacity),
-          content.trim()
-        );
-        onEventCreated?.(event);
-      } else {
-        if (!isPostsTableCategory(type)) {
-          setError('Choose General or Announcement for a feed post.');
-          return;
-        }
-        const post = await createPost(authorId, content, type);
-        onPostCreated(post);
+        metadata = {
+          title: eventTitle.trim(),
+          location: eventLocation.trim(),
+          eventDate: new Date(eventDate).toISOString(),
+          maxAttendees: eventCapacity ? Number(eventCapacity) : null,
+        };
       }
+
+      // One single call handles both General posts AND Events
+      const post = await createPost(authorId, content, type, metadata);
+      onPostCreated(post);
+      
     } catch (err: any) {
-      // Strip the error prefix codes for a cleaner user-facing message
       const msg = err.message ?? 'Something went wrong. Please try again.';
       setError(msg.replace(/^[A-Z_]+:\s*/, ''));
     } finally {
@@ -112,7 +108,6 @@ export default function CreatePostForm({
     <div className="create-post-form">
       <h2 className="create-post-form__title">Create a Post</h2>
 
-      {/* Error banner */}
       {error && (
         <div className="error-banner" role="alert">
           {error}
@@ -120,7 +115,6 @@ export default function CreatePostForm({
       )}
 
       <form onSubmit={handleSubmit} noValidate>
-
         {/* Post Type Selector */}
         <div className="form-group">
           <label htmlFor="post-type">Section</label>
@@ -132,7 +126,7 @@ export default function CreatePostForm({
           >
             <option value="general">General</option>
             <option value="announcement">Announcement</option>
-            <option value="event">Event</option>
+            <option value="events">Event</option>
           </select>
         </div>
 
@@ -167,7 +161,6 @@ export default function CreatePostForm({
         {/* Event-specific fields */}
         {isEventMode && (
           <div className="event-fields">
-
             <div className="form-group">
               <label htmlFor="event-title">Event Title</label>
               <input
@@ -244,7 +237,7 @@ export default function CreatePostForm({
           >
             Cancel
           </button>
-        </div>
+        </div> 
       </form>
     </div>
   );

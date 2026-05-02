@@ -1,17 +1,8 @@
 /**
  * SupabaseClient.ts — Study Group Service
- * 
- * Centralized Supabase client initialization and configuration.
- * Isolates database connection logic from business logic.
+ *
+ * Re-export the shared browser-safe Supabase client so the server and client
+ * code paths use the same configuration guard.
  */
 
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export { supabase } from '../supabaseClient'

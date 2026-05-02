@@ -258,8 +258,8 @@ describe('isValidCategory()', () => {
   it('returns true for "announcement"', () => {
     expect(isValidCategory('announcement')).toBe(true);
   });
-  it('returns true for "event"', () => {
-    expect(isValidCategory('event')).toBe(true);
+  it('returns true for "events"', () => {
+    expect(isValidCategory('events')).toBe(true);
   });
   it('returns false for "sports"', () => {
     expect(isValidCategory('sports')).toBe(false);
