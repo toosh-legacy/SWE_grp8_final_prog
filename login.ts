@@ -101,6 +101,9 @@ export async function login(
 export interface RegisterProfile {
   username?: string;
   campus?: string;
+  major?: string;
+  bio?: string;
+  avatarUrl?: string;
 }
 
 function signupOriginLoginUrl(): string | undefined {
@@ -135,6 +138,9 @@ export async function register(
 
   const username = profile?.username?.trim() ?? '';
   const campus = profile?.campus?.trim() ?? '';
+  const major = profile?.major?.trim() ?? '';
+  const bio = profile?.bio?.trim() ?? '';
+  const avatarUrl = profile?.avatarUrl?.trim() ?? '';
 
   const redirectTo = signupOriginLoginUrl();
   const { data, error } = await supabase.auth.signUp({
@@ -142,11 +148,14 @@ export async function register(
     password: pw as string,
     options: {
       ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
-      ...(username || campus
+        ...(username || campus || major || bio || avatarUrl
         ? {
             data: {
               username,
               campus,
+              major,
+              bio,
+              avatar_url: avatarUrl,
             },
           }
         : {}),
@@ -172,9 +181,9 @@ export async function register(
     email: data.user.email,
     name: username,
     campus,
-    major: '',
-    bio: '',
-    avatarUrl: '',
+    major,
+    bio,
+    avatarUrl,
     passwordHash: '[managed by Supabase Auth]',
   };
 }
