@@ -21,7 +21,9 @@ export default function PreferencesPage() {
   return (
     <div className="flex flex-col gap-10">
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-lg font-semibold">Appearance</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          Appearance
+        </h2>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Theme is saved with your settings and applied on load.
         </p>
@@ -56,7 +58,9 @@ export default function PreferencesPage() {
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-lg font-semibold">Default study mode</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          Default study mode
+        </h2>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Used when you open a new session (placeholder until sessions ship).
         </p>

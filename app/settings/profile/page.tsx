@@ -73,7 +73,7 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-      <h2 className="text-lg font-semibold">Profile</h2>
+      <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Profile</h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         Edit how you appear to study partners on campus.
       </p>

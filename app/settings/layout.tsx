@@ -15,7 +15,9 @@ export default function SettingsLayout({
         >
           ← Back to home
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
+          Settings
+        </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Account, profile, and study preferences for your campus.
         </p>

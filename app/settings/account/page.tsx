@@ -89,7 +89,9 @@ export default function AccountSettingsPage() {
   return (
     <div className="flex flex-col gap-10">
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-lg font-semibold">Change password</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          Change password
+        </h2>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           For this course build, submitting only validates input. Production would
           call your auth server — never store real passwords in the browser.
@@ -104,7 +106,7 @@ export default function AccountSettingsPage() {
               autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -116,7 +118,7 @@ export default function AccountSettingsPage() {
               autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -128,7 +130,7 @@ export default function AccountSettingsPage() {
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
           </label>
           {passwordMessage ? (
@@ -153,7 +155,9 @@ export default function AccountSettingsPage() {
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-lg font-semibold">Update email</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          Update email
+        </h2>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Current:{" "}
           <span className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -180,7 +184,7 @@ export default function AccountSettingsPage() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                 placeholder={verificationCodePlaceholder}
-                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 tracking-widest dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 tracking-widest placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
               />
             </label>
             {emailMessage ? (
@@ -222,7 +226,7 @@ export default function AccountSettingsPage() {
                 autoComplete="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
               />
             </label>
             {emailMessage ? (
