@@ -30,7 +30,6 @@ export default function ProfileSettingsPage() {
     setImageError(null);
     try {
       const dataUrl = await readImageAsDataUrl(file);
-      // Persist avatar even if this page unmounts immediately after file selection.
       update({ avatarDataUrl: dataUrl });
       const { data: authData } = await supabase.auth.getUser();
       const userId = authData.user?.id;
@@ -39,7 +38,7 @@ export default function ProfileSettingsPage() {
           .from("profiles")
           .update({ avatar_url: dataUrl })
           .eq("id", userId);
-        if (error) {
+        if (error && mountedRef.current) {
           setImageError("Saved locally, but could not sync avatar to profile.");
         }
       }
@@ -56,7 +55,7 @@ export default function ProfileSettingsPage() {
     setImageError(null);
     try {
       const dataUrl = await readImageAsDataUrl(file);
-      // Persist banner even if this page unmounts immediately after file selection.
+      if (!mountedRef.current) return;
       update({ bannerDataUrl: dataUrl });
     } catch (err) {
       if (!mountedRef.current) return;

@@ -10,7 +10,7 @@ body {
 }
 
 a {
-  color: #e05037;
+  color: var(--app-link, #e05037);
 }
 
 .login-container {
@@ -4584,4 +4584,3 @@ a {
 .dark .shell-toolbar__logout:hover {
   background: rgb(255 255 255 / 0.06);
 }
-

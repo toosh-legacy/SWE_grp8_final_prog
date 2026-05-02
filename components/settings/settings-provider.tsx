@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -38,10 +39,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loaded = loadSettings();
-    setSettings(loaded);
-    setTheme(loaded.theme);
-    setReady(true);
-  }, [setTheme]);
+    startTransition(() => {
+      setSettings(loaded);
+      setReady(true);
+    });
+  }, []);
 
   useEffect(() => {
     const sync = (session: Session | null) => {
@@ -67,8 +69,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setTheme(settings.theme);
   }, [ready, settings.theme, setTheme]);
 
-  const accountEmail =
-    authEmail && authEmail.length > 0 ? authEmail : settings.email;
+  const accountEmail = useMemo(
+    () => (authEmail && authEmail.length > 0 ? authEmail : settings.email),
+    [authEmail, settings.email],
+  );
 
   const update = useCallback(
     (patch: Partial<UserSettings>) => {

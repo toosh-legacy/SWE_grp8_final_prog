@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
-import "@/styles.css";
 import "./globals.css";
+import "@/styles.css";
 
 export const metadata: Metadata = {
   title: "Campus Connect",

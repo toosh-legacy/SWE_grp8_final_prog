@@ -1,7 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { useSettings } from "@/components/settings/settings-provider";
 import { campusLabel } from "@/lib/settings/campuses";
+
+const cards = [
+  {
+    href: "/settings/account",
+    title: "Account",
+    description: "Password and email with verification",
+  },
+  {
+    href: "/settings/profile",
+    title: "Profile",
+    description: "Name, bio, campus, photo and banner",
+  },
+  {
+    href: "/settings/preferences",
+    title: "Preferences",
+    description: "Theme and default study mode",
+  },
+  {
+    href: "/settings/notifications",
+    title: "Notifications",
+    description: "Reminders and campus updates",
+  },
+] as const;
 
 export default function SettingsHomePage() {
   const { settings, ready, reset, accountEmail } = useSettings();
@@ -48,6 +72,23 @@ export default function SettingsHomePage() {
             </div>
           </dl>
         )}
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2">
+        {cards.map((card) => (
+          <Link
+            key={card.href}
+            href={card.href}
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-600"
+          >
+            <h2 className="font-semibold text-zinc-900 group-hover:underline dark:text-zinc-50">
+              {card.title}
+            </h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              {card.description}
+            </p>
+          </Link>
+        ))}
       </section>
 
       <section className="rounded-2xl border border-red-200 bg-red-50/70 p-6 dark:border-red-900/70 dark:bg-red-950/20">
