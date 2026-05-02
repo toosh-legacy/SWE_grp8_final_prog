@@ -134,7 +134,7 @@ npm run lint
 
 ## Current Scope Notes
 
-- This is an MVP with client-side persistence (`localStorage`), intended for coursework/prototyping.
-- Email verification is simulated with a 6-digit code UX (no real mail service yet).
-- Password updates are UI-level demo behavior and intentionally do not store real credentials.
-- A production version should connect auth + backend APIs (e.g., Auth.js/Clerk/Firebase + DB).
+- This is an MVP with client-side persistence (`localStorage`), intended for coursework/prototyping
+- Email verification is simulated with a 6-digit code UX (no real mail service yet)
+- Password updates are UI-level demo behavior and intentionally do not store real credentials
+- A production version should connect auth + backend APIs (e.g., Auth.js/Clerk/Firebase + DB)
