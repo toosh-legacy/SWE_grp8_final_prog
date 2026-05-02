@@ -701,10 +701,7 @@ a {
 
 .home-hub {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(200px, 272px);
-  gap: clamp(20px, 2.8vw, 34px);
-  align-items: start;
+  display: block;
   padding-bottom: clamp(72px, 10vh, 100px);
   min-height: min(560px, 70vh);
 }
@@ -720,55 +717,6 @@ a {
   box-shadow:
     0 10px 32px rgb(0 0 0 / 0.45),
     inset 0 1px 0 rgb(255 255 255 / 0.25);
-}
-
-.home-hub__events {
-  padding: 4px 0 0;
-  border-radius: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.event-preview-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.event-preview-card {
-  overflow: hidden;
-  border-radius: 14px;
-  background: transparent;
-  box-shadow:
-    0 4px 14px rgb(0 0 0 / 0.45),
-    0 0 0 1px rgb(0 0 0 / 0.25);
-}
-
-.event-preview-card__date {
-  display: block;
-  padding: 12px 16px;
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  color: #f7f7f7;
-  text-transform: uppercase;
-  font-family:
-    inherit;
-  background: var(--dash-panel);
-  border-bottom: 1px solid #262626;
-}
-
-.event-preview-card__title {
-  display: block;
-  padding: 16px 16px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #212121;
-  background: var(--dash-feed-panel);
 }
 
 .feed-fab-slot {
@@ -971,6 +919,29 @@ a {
   border: 1px dashed rgb(0 0 0 / 0.1);
 }
 
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.feed-empty__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #2a2a2a;
+}
+
+.feed-empty__detail {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #4a4a4a;
+}
+
 .create-post-panel {
   background: rgb(220 220 220 / 0.95);
   border-radius: 16px;
@@ -1096,6 +1067,33 @@ a {
   flex-shrink: 0;
 }
 
+.post-card__like-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.post-card__like-count {
+  font-size: 13px;
+  font-weight: 800;
+  color: #e8e8e8;
+  min-width: 1.1rem;
+  user-select: none;
+}
+
+.post-card__like--active {
+  color: var(--dash-accent);
+}
+
+.post-card__like--active svg path:first-of-type {
+  fill: rgb(255 255 255 / 0.2);
+  stroke: var(--dash-accent);
+}
+
+.post-card__delete:hover:not(:disabled) {
+  color: #ff8a8a;
+}
+
 .post-card__icon-action {
   display: grid;
   place-items: center;
@@ -1118,6 +1116,11 @@ a {
   cursor: default;
 }
 
+.post-card__icon-action--active {
+  color: var(--dash-accent);
+  background: rgb(255 255 255 / 0.12);
+}
+
 .post-card__chevron {
   color: #dcdcdc;
   font-size: 22px;
@@ -1125,6 +1128,107 @@ a {
   line-height: 1;
   opacity: 0.9;
   padding: 0 4px;
+}
+
+.post-card__comments {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(0 0 0 / 0.08);
+}
+
+.post-card__comments-status {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.post-card__comment-list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.post-card__comment {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgb(0 0 0 / 0.04);
+  border-radius: 10px;
+  border: 1px solid rgb(0 0 0 / 0.06);
+}
+
+.post-card__comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.post-card__comment-author {
+  font-size: 12px;
+  font-weight: 800;
+  color: #2a2a2a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.post-card__comment-time {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+}
+
+.post-card__comment-body {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #1a1a1a;
+  word-break: break-word;
+}
+
+.post-card__comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.post-card__comment-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgb(0 0 0 / 0.12);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e1e1e;
+  resize: vertical;
+  min-height: 52px;
+  background: #fff;
+}
+
+.post-card__comment-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.post-card__comment-counter {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+}
+
+.btn-comment-submit {
+  padding: 8px 16px;
+  font-size: 13px;
 }
 
 .post-card__body {
@@ -1142,29 +1246,27 @@ a {
   font-weight: 600;
 }
 
+.post-card--event-feed .post-card__body {
+  min-height: auto;
+}
+
+.post-card__event-feed-desc {
+  font-weight: 500;
+  opacity: 0.92;
+  margin-top: 10px;
+}
+
+.post-card__event-feed-meta {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(30 30 30 / 0.72);
+}
+
 .post-card__media {
   margin-top: 14px;
   max-width: 100%;
   border-radius: 10px;
-}
-
-@media (max-width: 1024px) {
-  .home-hub {
-    grid-template-columns: 1fr;
-  }
-
-  .home-hub__events {
-    margin-top: 8px;
-  }
-
-  .event-preview-list {
-    flex-flow: row wrap;
-    gap: 12px;
-  }
-
-  .event-preview-card {
-    flex: 1 1 160px;
-  }
 }
 
 @media (max-width: 900px) {
@@ -1232,6 +1334,850 @@ a {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* ——— Profile page (LinkedIn / Instagram style) ——— */
+
+.profile-page {
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 28px);
+}
+
+.profile-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(22px, 3vw, 32px);
+  border-radius: 20px;
+  background: var(--dash-feed-panel);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 10px 32px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+.profile-header__avatar {
+  width: clamp(96px, 14vw, 132px);
+  height: clamp(96px, 14vw, 132px);
+  border-radius: 50%;
+  background: var(--dash-panel);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 4px solid #fff;
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+.profile-header__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-header__avatar-initials {
+  font-size: clamp(34px, 5vw, 46px);
+  font-weight: 800;
+  color: #f4f4f4;
+  letter-spacing: 0.04em;
+}
+
+.profile-header__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-header__name {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 900;
+  color: #050505;
+  letter-spacing: -0.025em;
+}
+
+.profile-header__subtitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+}
+
+.profile-header__meta {
+  margin: 4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2c;
+}
+
+.profile-header__meta-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.profile-header__bio {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #1f1f1f;
+  max-width: 60ch;
+}
+
+.profile-stats {
+  display: flex;
+  gap: clamp(16px, 3vw, 32px);
+  margin-top: 14px;
+  padding: 12px 0;
+  border-top: 1px solid rgb(0 0 0 / 0.1);
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 60px;
+}
+
+.profile-stat__value {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0a0a0a;
+  line-height: 1.1;
+}
+
+.profile-stat__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #555;
+  margin-top: 2px;
+}
+
+.profile-header__actions {
+  margin-top: 14px;
+}
+
+.profile-header__edit {
+  width: auto;
+  margin: 0;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.profile-posts {
+  padding: clamp(20px, 3vw, 28px);
+  border-radius: 20px;
+  background: var(--dash-feed-panel);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 10px 32px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-posts__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+  padding-bottom: 10px;
+}
+
+.profile-posts__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #050505;
+  letter-spacing: -0.02em;
+}
+
+.profile-posts__count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.04em;
+}
+
+.profile-post-tag {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--dash-accent);
+}
+
+.profile-post-tag--general {
+  background: #4a5568;
+}
+
+.profile-post-tag--announcement {
+  background: var(--dash-accent);
+}
+
+.profile-post-tag--event {
+  background: #2f7d4a;
+}
+
+@media (max-width: 640px) {
+  .profile-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .profile-header__avatar {
+    margin: 0 auto;
+  }
+
+  .profile-header__identity {
+    align-items: center;
+  }
+
+  .profile-header__bio {
+    margin-inline: auto;
+  }
+
+  .profile-stats {
+    justify-content: center;
+  }
+
+  .profile-stat {
+    align-items: center;
+  }
+}
+/* ─── Comment Section Styles (Instagram/Dark Academia Vibe) ─── */
+
+.comment-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0; /* Soft line separating post from comments */
+}
+
+.comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Space between comments */
+}
+
+.comment-status {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Individual Comment Row */
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* FIX: The Tiny Circle Avatar */
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
+}
+
+/* FIX: Inline Username and Text */
+.comment-body {
+  flex: 1;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.3;
+}
+
+.comment-text-wrapper {
+  margin: 0;
+}
+
+.comment-author {
+  font-weight: 700;
+  color: #0f172a; /* Dark text for readability */
+  margin-right: 0.4rem; /* Space between name and comment */
+}
+
+.comment-text {
+  color: #334155;
+  word-break: break-word;
+}
+
+/* Tiny Meta Row */
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.comment-reply-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.comment-reply-btn:hover {
+  color: #64748b;
+}
+
+/* Sticky Input Form */
+.comment-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px; /* Pill shape */
+  padding: 0.5rem 1rem;
+}
+
+.comment-form:focus-within {
+  border-color: #cbd5e1;
+}
+
+.comment-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.comment-submit {
+  font-weight: 700;
+  color: #2563eb; /* Blue action text */
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.comment-submit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+/* ─── Post Category Tags ─── */
+
+.post-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px; /* Pill shape */
+  border: 1px solid;
+}
+
+/* Neutral/Standard style for General */
+.post-tag--general {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+/* Accent color for Events */
+.post-tag--event {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+/* Alert/Notice color for Announcements */
+.post-tag--announcement {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+/* ─── Event Card (Clean + Minimal) ─── */
+
+.post-event {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  background: #e7e7e7; /* matches your feed panel tones */
+  border: 1px solid rgb(0 0 0 / 0.08);
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 1px 4px rgb(0 0 0 / 0.08);
+}
+
+.post-event__title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #111; /* FIX: no more white-on-white */
+  letter-spacing: -0.01em;
+}
+
+.post-event__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #444;
+}
+
+.post-event__icon {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* ——— Profile page (LinkedIn / Instagram style) ——— */
+
+.profile-page {
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 28px);
+}
+
+.profile-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(22px, 3vw, 32px);
+  border-radius: 20px;
+  background: var(--dash-feed-panel);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 10px 32px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+.profile-header__avatar {
+  width: clamp(96px, 14vw, 132px);
+  height: clamp(96px, 14vw, 132px);
+  border-radius: 50%;
+  background: var(--dash-panel);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 4px solid #fff;
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+.profile-header__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-header__avatar-initials {
+  font-size: clamp(34px, 5vw, 46px);
+  font-weight: 800;
+  color: #f4f4f4;
+  letter-spacing: 0.04em;
+}
+
+.profile-header__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-header__name {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 900;
+  color: #050505;
+  letter-spacing: -0.025em;
+}
+
+.profile-header__subtitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+}
+
+.profile-header__meta {
+  margin: 4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2c;
+}
+
+.profile-header__meta-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.profile-header__bio {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #1f1f1f;
+  max-width: 60ch;
+}
+
+.profile-stats {
+  display: flex;
+  gap: clamp(16px, 3vw, 32px);
+  margin-top: 14px;
+  padding: 12px 0;
+  border-top: 1px solid rgb(0 0 0 / 0.1);
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 60px;
+}
+
+.profile-stat__value {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0a0a0a;
+  line-height: 1.1;
+}
+
+.profile-stat__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #555;
+  margin-top: 2px;
+}
+
+.profile-header__actions {
+  margin-top: 14px;
+}
+
+.profile-header__edit {
+  width: auto;
+  margin: 0;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.profile-posts {
+  padding: clamp(20px, 3vw, 28px);
+  border-radius: 20px;
+  background: var(--dash-feed-panel);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 10px 32px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-posts__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+  padding-bottom: 10px;
+}
+
+.profile-posts__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #050505;
+  letter-spacing: -0.02em;
+}
+
+.profile-posts__count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.04em;
+}
+
+.profile-post-tag {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--dash-accent);
+}
+
+.profile-post-tag--general {
+  background: #4a5568;
+}
+
+.profile-post-tag--announcement {
+  background: var(--dash-accent);
+}
+
+.profile-post-tag--event {
+  background: #2f7d4a;
+}
+
+@media (max-width: 640px) {
+  .profile-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .profile-header__avatar {
+    margin: 0 auto;
+  }
+
+  .profile-header__identity {
+    align-items: center;
+  }
+
+  .profile-header__bio {
+    margin-inline: auto;
+  }
+
+  .profile-stats {
+    justify-content: center;
+  }
+
+  .profile-stat {
+    align-items: center;
+  }
+}
+/* ─── Comment Section Styles (Instagram/Dark Academia Vibe) ─── */
+
+.comment-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0; /* Soft line separating post from comments */
+}
+
+.comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Space between comments */
+}
+
+.comment-status {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Individual Comment Row */
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* FIX: The Tiny Circle Avatar */
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
+}
+
+/* FIX: Inline Username and Text */
+.comment-body {
+  flex: 1;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.3;
+}
+
+.comment-text-wrapper {
+  margin: 0;
+}
+
+.comment-author {
+  font-weight: 700;
+  color: #0f172a; /* Dark text for readability */
+  margin-right: 0.4rem; /* Space between name and comment */
+}
+
+.comment-text {
+  color: #334155;
+  word-break: break-word;
+}
+
+/* Tiny Meta Row */
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.comment-reply-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.comment-reply-btn:hover {
+  color: #64748b;
+}
+
+/* Sticky Input Form */
+.comment-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px; /* Pill shape */
+  padding: 0.5rem 1rem;
+}
+
+.comment-form:focus-within {
+  border-color: #cbd5e1;
+}
+
+.comment-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.comment-submit {
+  font-weight: 700;
+  color: #2563eb; /* Blue action text */
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.comment-submit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+/* ─── Post Category Tags ─── */
+
+.post-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px; /* Pill shape */
+  border: 1px solid;
+}
+
+/* Neutral/Standard style for General */
+.post-tag--general {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+/* Accent color for Events */
+.post-tag--event {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+/* Alert/Notice color for Announcements */
+.post-tag--announcement {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+/* ─── Event Card (Clean + Minimal) ─── */
+
+.post-event {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  background: #e7e7e7; /* matches your feed panel tones */
+  border: 1px solid rgb(0 0 0 / 0.08);
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 1px 4px rgb(0 0 0 / 0.08);
+}
+
+.post-event__title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #111; /* FIX: no more white-on-white */
+  letter-spacing: -0.01em;
+}
+
+.post-event__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #444;
+}
+
+.post-event__icon {
+  font-size: 13px;
+  opacity: 0.75;
 }
 
 

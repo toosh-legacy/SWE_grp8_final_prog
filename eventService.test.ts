@@ -128,6 +128,8 @@ import {
   cancelEvent,
   rsvpEvent,
   getAttendees,
+  getNextUpcomingEvents,
+  searchUpcomingEvents,
   isValidTitle,
   isValidFutureDate,
   isValidCapacity,
@@ -149,7 +151,9 @@ function makeMock(result: { data?: any; error?: any }) {
     update:  vi.fn(),
     delete:  vi.fn(),
     eq:      vi.fn(),
-    order:   vi.fn().mockResolvedValue(result),
+    gte:     vi.fn(),
+    limit:   vi.fn(),
+    order:   vi.fn(),
     single:  vi.fn().mockResolvedValue(result),
   });
 
@@ -158,6 +162,10 @@ function makeMock(result: { data?: any; error?: any }) {
   chain.update.mockReturnValue(chain);
   chain.delete.mockReturnValue(chain);
   chain.eq.mockReturnValue(chain);
+  chain.gte.mockReturnValue(chain);
+  chain.limit.mockReturnValue(chain);
+  chain.order.mockReturnValue(chain);
+  chain.single.mockReturnValue(Promise.resolve(result));
 
   return chain;
 }
@@ -251,6 +259,33 @@ describe('publishEvent()', () => {
     expect(event.location).toBe('JSOM 2.803');
     expect(event.capacity).toBe(50);
     expect(event.isCancelled).toBe(false);
+  });
+
+  it('PE8 | blank description (6th arg) → throws INVALID_DESCRIPTION', async () => {
+    await expect(
+      publishEvent('uuid-org-01', 'CS Study Fair', 'JSOM 2.803', FUTURE_DATE, 50, '   ')
+    ).rejects.toThrow('INVALID_DESCRIPTION');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('PE9 | with description → maps description on returned event', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({
+        data: { ...MOCK_EVENT_DB, description: 'Bring your laptop!' },
+        error: null,
+      })
+    );
+
+    const event = await publishEvent(
+      'uuid-org-01',
+      'CS Study Fair',
+      'JSOM 2.803',
+      FUTURE_DATE,
+      50,
+      'Bring your laptop!'
+    );
+
+    expect(event.description).toBe('Bring your laptop!');
   });
 
   it('PE2 | empty title → throws INVALID_TITLE (no Supabase call)', async () => {
@@ -480,5 +515,90 @@ describe('getAttendees()', () => {
     );
 
     await expect(getAttendees('unknown-evt-id')).rejects.toThrow('EVENT_NOT_FOUND');
+  });
+});
+// ─── getNextUpcomingEvents() ───────────────────────────────────────────────────
+
+describe('getNextUpcomingEvents()', () => {
+  const UPCOMING_ROW = {
+    id: 'evt-u1',
+    organizer_id: 'org-01',
+    title:       'Study Jam',
+    location:    'SLC',
+    start_time:  FUTURE_DATE,
+    capacity:    25,
+    is_cancelled: false,
+  };
+
+  it('GU1 | success → resolves with mapped CampusEvents (limited)', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: [UPCOMING_ROW], error: null })
+    );
+
+    const list = await getNextUpcomingEvents(3);
+
+    expect(list).toHaveLength(1);
+    expect(list[0].eventId).toBe('evt-u1');
+    expect(list[0].title).toBe('Study Jam');
+  });
+
+  it('GU2 | no rows → []', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: [], error: null })
+    );
+
+    await expect(getNextUpcomingEvents()).resolves.toEqual([]);
+  });
+
+  it('GU3 | DB error → throws LIST_UPCOMING_EVENTS_ERROR', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: null, error: { message: 'blocked' } })
+    );
+
+    await expect(getNextUpcomingEvents()).rejects.toThrow('LIST_UPCOMING_EVENTS_ERROR');
+  });
+});
+
+// ─── searchUpcomingEvents() ────────────────────────────────────────────────────
+
+describe('searchUpcomingEvents()', () => {
+  const ROW_A = {
+    id: 'evt-s1',
+    organizer_id: 'org-01',
+    title: 'Coffee with CS',
+    location: 'ECS',
+    start_time: FUTURE_DATE,
+    capacity: 20,
+    is_cancelled: false,
+  };
+
+  const ROW_B = {
+    id: 'evt-s2',
+    organizer_id: 'org-02',
+    title: 'Math Club',
+    location: 'Union coffee nook',
+    start_time: FUTURE_DATE,
+    capacity: 10,
+    is_cancelled: false,
+    description: 'Algebra review',
+  };
+
+  it('SU1 | matches title, location, or description', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: [ROW_A, ROW_B], error: null })
+    );
+
+    const byTitle = await searchUpcomingEvents('math', 20);
+    expect(byTitle.some((e) => e.title.includes('Math'))).toBe(true);
+
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: [ROW_A, ROW_B], error: null })
+    );
+    const byDesc = await searchUpcomingEvents('algebra', 20);
+    expect(byDesc.some((e) => e.eventId === 'evt-s2')).toBe(true);
+  });
+
+  it('SU2 | empty query throws INVALID_QUERY', async () => {
+    await expect(searchUpcomingEvents('   ')).rejects.toThrow('INVALID_QUERY');
   });
 });

@@ -15,8 +15,7 @@
  * ├──────────┼────────────┼──────────────────────────┼──────────────────────┼──────────────────────────┤
  * │ authorId │ string     │ valid UUID               │ random string        │ null, undefined, ""      │
  * │ content  │ string     │ 1–250 chars              │ 251+ chars           │ null, undefined, ""      │
- * │ type     │ FeedCat.   │ "general"|"announcement" │ "unknown","123"      │ null, undefined, ""      │
- * │          │            │ |"event"                 │                      │                          │
+ * │ type     │ FeedCat.   │ "general"|"announcement" │ "event","unknown"…   │ null, undefined, ""      │
  * └──────────┴────────────┴──────────────────────────┴──────────────────────┴──────────────────────────┘
  *
  *  editPost(postId, authorId, newContent)
@@ -40,7 +39,7 @@
  * ┌──────────────┬────────┬──────────────────────────┬──────────────────────┬──────────────────────────┐
  * │ Variable     │ Type   │ Valid                    │ Invalid              │ Exceptional              │
  * ├──────────────┼────────┼──────────────────────────┼──────────────────────┼──────────────────────────┤
- * │ postId       │ string │ existing post UUID       │ already-liked post   │ null, ""                 │
+ * │ postId       │ string │ existing post UUID       │ —                    │ null, ""                 │
  * │ studentId    │ string │ valid user UUID          │ (same as postId)     │ null, ""                 │
  * └──────────────┴────────┴──────────────────────────┴──────────────────────┴──────────────────────────┘
  *
@@ -83,7 +82,7 @@
  * │ CP4  │ valid authorId/content │ "sports"               │ throws INVALID_TYPE                   │
  * │ CP5  │ "" authorId            │ general                │ throws INVALID_AUTHOR                 │
  * │ CP6  │ null content           │ general                │ throws INVALID_CONTENT                │
- * │ CP7  │ valid                  │ "event"                │ resolves → Post with type "event"     │
+ * │ CP7  │ valid                  │ "event"                │ throws INVALID_TYPE (events use events table) │
  * └──────┴────────────────────────┴────────────────────────┴───────────────────────────────────────┘
  *
  *  editPost() — 4 scenarios
@@ -110,7 +109,7 @@
  * │ TC # │ Scenario → Expected Output                                                              │
  * ├──────┼─────────────────────────────────────────────────────────────────────────────────────────┤
  * │ LP1  │ valid postId + studentId, not yet liked → resolves → true                             │
- * │ LP2  │ student already liked this post → throws ALREADY_LIKED                                 │
+ * │ LP2  │ student already liked this post → unlike → resolves → false                            │
  * │ LP3  │ empty postId → throws INVALID_POST_ID                                                  │
  * │ LP4  │ empty studentId → throws INVALID_STUDENT_ID                                            │
  * └──────┴─────────────────────────────────────────────────────────────────────────────────────────┘
@@ -130,16 +129,17 @@
  * ├──────┼─────────────────────────────────────────────────────────────────────────────────────────┤
  * │ GF1  │ category = "general" → resolves → Post[]                                               │
  * │ GF2  │ category = "sports" (invalid) → throws INVALID_CATEGORY                                │
- * │ GF3  │ category = "event", no posts exist → resolves → []                                     │
+ * │ GF3  │ category = "event" → throws INVALID_CATEGORY (events not in posts)                      │
  * └──────┴─────────────────────────────────────────────────────────────────────────────────────────┘
  *
- *  searchFeed() — 3 scenarios
+ *  searchFeed() — 4 scenarios
  * ┌──────┬─────────────────────────────────────────────────────────────────────────────────────────┐
  * │ TC # │ Scenario → Expected Output                                                              │
  * ├──────┼─────────────────────────────────────────────────────────────────────────────────────────┤
  * │ SF1  │ valid query → resolves → matching Post[]                                                │
  * │ SF2  │ empty query → throws INVALID_QUERY                                                      │
  * │ SF3  │ valid query, no matches → resolves → []                                                 │
+ * │ SF4  │ category = "event" → throws INVALID_CATEGORY                                            │
  * └──────┴─────────────────────────────────────────────────────────────────────────────────────────┘
  *
  * ─────────────────────────────────────────────────────────────────────────────
@@ -156,7 +156,7 @@
  * │ CP4  │ "uuid-author-01"       │ "Hello campus!"             │ "sports"       │ Error includes "INVALID_TYPE"              │
  * │ CP5  │ ""                     │ "Hello campus!"             │ "general"      │ Error includes "INVALID_AUTHOR"            │
  * │ CP6  │ "uuid-author-01"       │ null                        │ "general"      │ Error includes "INVALID_CONTENT"           │
- * │ CP7  │ "uuid-author-01"       │ "Tech Talk @ UTD this Fri!" │ "event"        │ Post with type: "event"                    │
+ * │ CP7  │ "uuid-author-01"       │ "Tech Talk @ UTD this Fri!" │ "event"        │ Error includes "INVALID_TYPE"              │
  * └──────┴────────────────────────┴─────────────────────────────┴────────────────┴────────────────────────────────────────────┘
  */
 
@@ -167,12 +167,14 @@ import {
   deletePost,
   likePost,
   addComment,
+  getCommentsForPost,
   getFeedByCategory,
   searchFeed,
   isValidContent,
   isWithinPostLimit,
   isValidCategory,
   MAX_POST_LENGTH,
+  MAX_COMMENT_LENGTH,
 } from './postService';
 
 // ─── Supabase Mock ─────────────────────────────────────────────────────────────
@@ -186,7 +188,7 @@ import { supabase } from './supabaseClient';
 /**
  * Builds a Supabase-like chainable mock that:
  * - Returns `this` on all builder methods (select, eq, ilike, order, update, delete, insert)
- * - Resolves to `result` on `single()` and `order()` terminal calls
+ * - Resolves to `result` on `single()`, `maybeSingle()`, and `order()` terminal calls
  * - Is itself a Promise resolving to `result` (handles direct awaits)
  */
 function makeMock(result: { data?: any; error?: any }) {
@@ -197,8 +199,9 @@ function makeMock(result: { data?: any; error?: any }) {
     delete:  vi.fn(),
     eq:      vi.fn(),
     ilike:   vi.fn(),
-    order:   vi.fn().mockResolvedValue(result),
-    single:  vi.fn().mockResolvedValue(result),
+    order:        vi.fn().mockResolvedValue(result),
+    single:       vi.fn().mockResolvedValue(result),
+    maybeSingle: vi.fn().mockResolvedValue(result),
   });
 
   // All builder methods return the same chain
@@ -255,8 +258,8 @@ describe('isValidCategory()', () => {
   it('returns true for "announcement"', () => {
     expect(isValidCategory('announcement')).toBe(true);
   });
-  it('returns true for "event"', () => {
-    expect(isValidCategory('event')).toBe(true);
+  it('returns true for "events"', () => {
+    expect(isValidCategory('events')).toBe(true);
   });
   it('returns false for "sports"', () => {
     expect(isValidCategory('sports')).toBe(false);
@@ -276,10 +279,10 @@ describe('isValidCategory()', () => {
 describe('createPost()', () => {
   const MOCK_POST_DB = {
     id:         'post-id-001',
-    author_id:  'uuid-author-01',
+    user_id:    'uuid-author-01',
     content:    'Study session at SU!',
     media_url:  null,
-    type:       'general',
+    section:    'general',
     created_at: '2026-04-19T10:00:00.000Z',
   };
 
@@ -329,15 +332,15 @@ describe('createPost()', () => {
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it('CP7 | valid fields, type = "event" → resolves with Post typed as event', async () => {
-    vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: { ...MOCK_POST_DB, type: 'event', content: 'Tech Talk @ UTD this Fri!' }, error: null })
-    );
-
-    const post = await createPost('uuid-author-01', 'Tech Talk @ UTD this Fri!', 'event');
-
-    expect(post.type).toBe('event');
-    expect(post.content).toBe('Tech Talk @ UTD this Fri!');
+  it('CP7 | valid fields, type = "event" → throws INVALID_TYPE (no posts row)', async () => {
+    await expect(
+      createPost(
+        'uuid-author-01',
+        'Tech Talk @ UTD this Fri!',
+        'event' as unknown as Parameters<typeof createPost>[2]
+      )
+    ).rejects.toThrow('INVALID_TYPE');
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });
 
@@ -349,7 +352,7 @@ describe('editPost()', () => {
   it('EP1 | valid postId + matching author + valid content → resolves with true', async () => {
     // First call: fetch ownership check
     vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeMock({ data: { author_id: 'uuid-author-01' }, error: null }))
+      .mockReturnValueOnce(makeMock({ data: { user_id: 'uuid-author-01' }, error: null }))
       // Second call: update
       .mockReturnValueOnce(makeMock({ data: null, error: null }));
 
@@ -377,7 +380,7 @@ describe('editPost()', () => {
 
   it('EP4 | different authorId → throws UNAUTHORIZED', async () => {
     vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: { author_id: 'uuid-different-author' }, error: null })
+      makeMock({ data: { user_id: 'uuid-different-author' }, error: null })
     );
 
     await expect(
@@ -393,7 +396,7 @@ describe('editPost()', () => {
 describe('deletePost()', () => {
   it('DP1 | valid postId + matching author → resolves with true', async () => {
     vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeMock({ data: { author_id: 'uuid-author-01' }, error: null }))
+      .mockReturnValueOnce(makeMock({ data: { user_id: 'uuid-author-01' }, error: null }))
       .mockReturnValueOnce(makeMock({ data: null, error: null }));
 
     const result = await deletePost('post-id-001', 'uuid-author-01');
@@ -411,7 +414,7 @@ describe('deletePost()', () => {
 
   it('DP3 | different authorId → throws UNAUTHORIZED', async () => {
     vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: { author_id: 'uuid-someone-else' }, error: null })
+      makeMock({ data: { user_id: 'uuid-someone-else' }, error: null })
     );
 
     await expect(deletePost('post-id-001', 'uuid-author-01')).rejects.toThrow('UNAUTHORIZED');
@@ -424,9 +427,9 @@ describe('deletePost()', () => {
 
 describe('likePost()', () => {
   it('LP1 | valid postId + studentId, not yet liked → resolves with true', async () => {
-    // First call: check existing like (returns null = not liked yet)
+    // First call: check existing like (none — maybeSingle resolves with null row)
     vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeMock({ data: null, error: { message: 'Not found' } }))
+      .mockReturnValueOnce(makeMock({ data: null, error: null }))
       // Second call: insert like
       .mockReturnValueOnce(makeMock({ data: null, error: null }));
 
@@ -435,12 +438,16 @@ describe('likePost()', () => {
     expect(result).toBe(true);
   });
 
-  it('LP2 | post already liked by this student → throws ALREADY_LIKED', async () => {
-    vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: { post_id: 'post-id-001' }, error: null })
-    );
+  it('LP2 | post already liked → unlike → resolves with false', async () => {
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(
+        makeMock({ data: { post_id: 'post-id-001' }, error: null })
+      )
+      .mockReturnValueOnce(makeMock({ data: null, error: null }));
 
-    await expect(likePost('post-id-001', 'uuid-student-01')).rejects.toThrow('ALREADY_LIKED');
+    const result = await likePost('post-id-001', 'uuid-student-01');
+
+    expect(result).toBe(false);
   });
 
   it('LP3 | empty postId → throws INVALID_POST_ID (no Supabase call)', async () => {
@@ -462,7 +469,7 @@ describe('addComment()', () => {
   const MOCK_COMMENT_DB = {
     id:         'comment-id-001',
     post_id:    'post-id-001',
-    author_id:  'uuid-author-01',
+    user_id:    'uuid-author-01',
     content:    'Great post!',
     created_at: '2026-04-19T11:00:00.000Z',
   };
@@ -499,6 +506,69 @@ describe('addComment()', () => {
       addComment('unknown-post-id', 'uuid-author-01', 'Great post!')
     ).rejects.toThrow('POST_NOT_FOUND');
   });
+
+  it('AC4 | empty authorId → throws INVALID_AUTHOR (no Supabase call)', async () => {
+    await expect(
+      addComment('post-id-001', '', 'Great post!')
+    ).rejects.toThrow('INVALID_AUTHOR');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('AC5 | content over MAX_COMMENT_LENGTH → throws COMMENT_TOO_LONG', async () => {
+    await expect(
+      addComment('post-id-001', 'uuid-author-01', 'x'.repeat(MAX_COMMENT_LENGTH + 1))
+    ).rejects.toThrow('COMMENT_TOO_LONG');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// getCommentsForPost()
+// =============================================================================
+
+describe('getCommentsForPost()', () => {
+  it('GC1 | valid postId → resolves with Comment[]', async () => {
+    const rows = [
+      {
+        id: 'c1',
+        post_id: 'post-id-001',
+        user_id: 'uuid-a',
+        content: 'First',
+        created_at: '2026-04-19T10:00:00.000Z',
+      },
+      {
+        id: 'c2',
+        post_id: 'post-id-001',
+        user_id: 'uuid-b',
+        content: 'Second',
+        created_at: '2026-04-19T11:00:00.000Z',
+      },
+    ];
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: rows, error: null })
+    );
+
+    const list = await getCommentsForPost('post-id-001');
+
+    expect(list).toHaveLength(2);
+    expect(list[0].commentId).toBe('c1');
+    expect(list[0].content).toBe('First');
+    expect(list[1].commentId).toBe('c2');
+  });
+
+  it('GC2 | empty postId → throws INVALID_POST_ID', async () => {
+    await expect(getCommentsForPost('')).rejects.toThrow('INVALID_POST_ID');
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('GC3 | no comments → resolves with []', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(
+      makeMock({ data: [], error: null })
+    );
+
+    const list = await getCommentsForPost('post-id-001');
+    expect(list).toEqual([]);
+  });
 });
 
 // =============================================================================
@@ -508,12 +578,12 @@ describe('addComment()', () => {
 describe('getFeedByCategory()', () => {
   const MOCK_POSTS = [
     {
-      id: 'post-id-001', author_id: 'uuid-a', content: 'Hello!',
-      media_url: null, type: 'general', created_at: '2026-04-19T10:00:00.000Z',
+      id: 'post-id-001', user_id: 'uuid-a', content: 'Hello!',
+      media_url: null, section: 'general', created_at: '2026-04-19T10:00:00.000Z',
     },
     {
-      id: 'post-id-002', author_id: 'uuid-b', content: 'World!',
-      media_url: null, type: 'general', created_at: '2026-04-18T09:00:00.000Z',
+      id: 'post-id-002', user_id: 'uuid-b', content: 'World!',
+      media_url: null, section: 'general', created_at: '2026-04-18T09:00:00.000Z',
     },
   ];
 
@@ -535,15 +605,9 @@ describe('getFeedByCategory()', () => {
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it('GF3 | valid category but no posts exist → resolves with empty array', async () => {
-    vi.mocked(supabase.from).mockReturnValueOnce(
-      makeMock({ data: [], error: null })
-    );
-
-    const posts = await getFeedByCategory('event');
-
-    expect(Array.isArray(posts)).toBe(true);
-    expect(posts).toHaveLength(0);
+  it('GF3 | category = "event" → throws INVALID_CATEGORY (events not in posts)', async () => {
+    await expect(getFeedByCategory('event')).rejects.toThrow('INVALID_CATEGORY');
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });
 
@@ -555,8 +619,8 @@ describe('searchFeed()', () => {
   it('SF1 | valid query → resolves with matching Post array', async () => {
     const mockResults = [
       {
-        id: 'post-id-003', author_id: 'uuid-c', content: 'Study group forming for CS 3354!',
-        media_url: null, type: 'general', created_at: '2026-04-19T12:00:00.000Z',
+        id: 'post-id-003', user_id: 'uuid-c', content: 'Study group forming for CS 3354!',
+        media_url: null, section: 'general', created_at: '2026-04-19T12:00:00.000Z',
       },
     ];
     vi.mocked(supabase.from).mockReturnValueOnce(
@@ -583,5 +647,10 @@ describe('searchFeed()', () => {
 
     expect(Array.isArray(posts)).toBe(true);
     expect(posts).toHaveLength(0);
+  });
+
+  it('SF4 | category = "event" → throws INVALID_CATEGORY', async () => {
+    await expect(searchFeed('hello', 'event')).rejects.toThrow('INVALID_CATEGORY');
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });
