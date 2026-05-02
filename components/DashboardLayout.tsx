@@ -2,43 +2,41 @@
 
 /**
  * DashboardLayout.tsx — Campus Connect
- * Authenticated App Shell (sidebar, masthead, main outlet)
+ * Logged-in shell: sidebar, page title, main content.
  *
- * Gates dashboard routes on Supabase session; redirects unauthenticated users to /login.
- * Exposes `useDashboardUserId` for child pages that need the current user id.
+ * Requires a Supabase session; sends anonymous users to /login.
+ * Children can read the user id via useDashboardUserId().
  */
 
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
   useState,
+  type ReactNode,
 } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
-
+import type { AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/supabaseClient';
 
-// ─── Context & hook ────────────────────────────────────────────────────────────
+// ─── Context ───────────────────────────────────────────────────────────────────
 
 const DashboardUserContext = createContext<string | undefined>(undefined);
 
 export function useDashboardUserId(): string {
   const id = useContext(DashboardUserContext);
-  if (!id)
-    throw new Error('useDashboardUserId must be used within DashboardLayout.');
+  if (!id) throw new Error('useDashboardUserId must be used inside DashboardLayout.');
   return id;
 }
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────────
+// ─── Nav config ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS: { label: string; href: string }[] = [
   { label: 'Home', href: '/home' },
@@ -55,12 +53,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  // ── Auth: session load + listener ────────────────────────────────────────────
-
   useEffect(() => {
     let cancelled = false;
 
-    const applySession = (session: { user: { id: string } } | null) => {
+    function applySession(session: { user?: { id?: string } } | null) {
       if (cancelled) return;
       const id = session?.user?.id;
       if (!id) {
@@ -69,9 +65,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         return;
       }
       setUserId(id);
-    };
+    }
 
-    (async () => {
+    void (async () => {
       try {
         const { data } = await supabase.auth.getSession();
         applySession(data.session);
@@ -80,32 +76,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       }
     })();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        applySession(session);
-      }
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      (_e: AuthChangeEvent, session) => applySession(session)
     );
 
     return () => {
       cancelled = true;
-      authListener.subscription.unsubscribe();
+      sub.subscription.unsubscribe();
     };
   }, [router]);
 
-  // ── Early returns ────────────────────────────────────────────────────────────
-
-  if (!ready)
+  if (!ready) {
     return (
       <div className="dashboard-auth-gate">
         <p className="dashboard-auth-gate__text">Loading…</p>
       </div>
     );
+  }
 
   if (!userId) return null;
 
-  const pageHeading = pageTitleForPath(pathname);
-
-  // ── Render ───────────────────────────────────────────────────────────────────
+  const heading = titleForPath(pathname);
 
   return (
     <DashboardUserContext.Provider value={userId}>
@@ -130,21 +121,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         <div className="app-shell__body">
           <div className="app-shell__masthead">
-            <h1 className="shell-page-heading">{pageHeading}</h1>
+            <h1 className="shell-page-heading">{heading}</h1>
             <div className="shell-toolbar" role="presentation">
               <span className="shell-brand-pill">Campus Connect</span>
               <div className="shell-toolbar__tools">
-                <Link
-                  href="/profile"
-                  className="shell-icon-btn"
-                  aria-label="Settings"
-                >
+                <Link href="/profile" className="shell-icon-btn" aria-label="Settings">
                   <svg
                     className="shell-icon-btn__svg"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="1.75"
+                    strokeWidth={1.75}
                     strokeLinecap="round"
                     aria-hidden
                   >
@@ -168,7 +155,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────────
 
-function pageTitleForPath(pathname: string): string {
+function titleForPath(pathname: string): string {
   if (pathname.startsWith('/study-groups')) return 'Study Groups';
   if (pathname.startsWith('/messages')) return 'Direct Messages';
   if (pathname.startsWith('/profile')) return 'Profile';

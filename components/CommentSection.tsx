@@ -1,40 +1,58 @@
 'use client';
 
-import React, { useState, useEffect, FormEvent } from 'react';
-import { getCommentsByPost, addComment, MAX_COMMENT_LENGTH } from '@/postService';
+/**
+ * CommentSection.tsx — Campus Connect
+ * Thread under a post: load comments, add one (FR8d).
+ *
+ * Fetches by postId via postService; assumes parent already checked auth.
+ */
+
+import { useState, useEffect, type FormEvent } from 'react';
 import type { Comment } from '@/index';
+import { getCommentsByPost, addComment, MAX_COMMENT_LENGTH } from '@/postService';
+
+// ─── Props ─────────────────────────────────────────────────────────────────────
 
 interface CommentSectionProps {
   postId: string;
   currentUserId: string;
 }
 
+// ─── Component ─────────────────────────────────────────────────────────────────
+
 export default function CommentSection({ postId, currentUserId }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState('');
+  const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch comments when the section is opened
   useEffect(() => {
+    let ignore = false;
+    setLoading(true);
     getCommentsByPost(postId)
-      .then(setComments)
-      .catch((err) => console.error("Failed to load comments", err))
-      .finally(() => setLoading(false));
+      .then((rows) => {
+        if (!ignore) setComments(rows);
+      })
+      .catch((err) => console.error('comments load:', err))
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [postId]);
 
-  async function handleCommentSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const trimmed = commentText.trim();
-    if (!trimmed || submitting) return;
-    
+    const t = text.trim();
+    if (!t || submitting) return;
     setSubmitting(true);
     try {
-      const created = await addComment(postId, currentUserId, trimmed);
-      setComments((prev) => [...prev, created]);
-      setCommentText('');
+      const row = await addComment(postId, currentUserId, t);
+      setComments((prev) => [...prev, row]);
+      setText('');
     } catch (err) {
-      console.error('Failed to add comment:', err);
+      console.error('add comment:', err);
     } finally {
       setSubmitting(false);
     }
@@ -45,28 +63,41 @@ export default function CommentSection({ postId, currentUserId }: CommentSection
       {loading ? (
         <p className="post-card__comments-status">Loading comments…</p>
       ) : comments.length === 0 ? (
-        <p className="post-card__comments-status">No comments yet. Be the first to reply.</p>
+        <p className="post-card__comments-status">No comments yet.</p>
       ) : (
         <ul className="post-card__comment-list" role="list">
           {comments.map((c) => (
             <li key={c.commentId} className="post-card__comment">
-              
-              {/* Updated Meta Row: Now includes PFP and actual Username */}
-              <div className="post-card__comment-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div
+                className="post-card__comment-meta"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
                 {c.authorPFP ? (
-                  <img 
-                    src={c.authorPFP} 
-                    alt="" 
-                    style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} 
+                  <img
+                    src={c.authorPFP}
+                    alt=""
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                    }}
                   />
                 ) : (
-                  <span className="post-card__avatar" style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#e2e8f0' }} aria-hidden />
+                  <span
+                    className="post-card__avatar"
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      backgroundColor: '#e2e8f0',
+                    }}
+                    aria-hidden
+                  />
                 )}
-                
                 <span className="post-card__comment-author" style={{ fontWeight: 600 }}>
                   {c.authorId === currentUserId ? 'You' : c.authorName}
                 </span>
-                
                 <time className="post-card__comment-time" dateTime={c.createdAt}>
                   {new Date(c.createdAt).toLocaleString('en-US', {
                     month: 'short',
@@ -76,36 +107,34 @@ export default function CommentSection({ postId, currentUserId }: CommentSection
                   })}
                 </time>
               </div>
-              
               <p className="post-card__comment-body">{c.content}</p>
             </li>
           ))}
         </ul>
       )}
 
-      {/* Your exact form markup, now wired to the component's state */}
-      <form className="post-card__comment-form" onSubmit={handleCommentSubmit}>
+      <form className="post-card__comment-form" onSubmit={onSubmit}>
         <label htmlFor={`comment-${postId}`} className="sr-only">
-          Write a comment
+          Comment
         </label>
         <textarea
           id={`comment-${postId}`}
           className="post-card__comment-input"
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
           placeholder="Write a comment…"
           rows={2}
-          maxLength={MAX_COMMENT_LENGTH || 250}
+          maxLength={MAX_COMMENT_LENGTH}
           disabled={submitting}
         />
         <div className="post-card__comment-form-footer">
           <span className="post-card__comment-counter">
-            {commentText.length}/{MAX_COMMENT_LENGTH || 250}
+            {text.length}/{MAX_COMMENT_LENGTH}
           </span>
           <button
             type="submit"
             className="btn btn-primary btn-comment-submit"
-            disabled={submitting || !commentText.trim()}
+            disabled={submitting || !text.trim()}
           >
             {submitting ? 'Posting…' : 'Comment'}
           </button>

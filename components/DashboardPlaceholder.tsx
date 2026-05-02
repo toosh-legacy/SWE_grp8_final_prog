@@ -1,7 +1,16 @@
+/**
+ * DashboardPlaceholder.tsx — Campus Connect
+ * Simple “coming soon” block for dashboard routes without a full UI yet.
+ */
+
+// ─── Props ─────────────────────────────────────────────────────────────────────
+
 interface DashboardPlaceholderProps {
   title: string;
   description: string;
 }
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function DashboardPlaceholder({
   title,
