@@ -1389,3 +1389,425 @@ a {
     align-items: stretch;
   }
 }
+
+/* ——— Profile page (LinkedIn / Instagram style) ——— */
+
+.profile-page {
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 28px);
+}
+
+.profile-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(22px, 3vw, 32px);
+  border-radius: 20px;
+  background: var(--dash-feed-panel);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 10px 32px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+.profile-header__avatar {
+  width: clamp(96px, 14vw, 132px);
+  height: clamp(96px, 14vw, 132px);
+  border-radius: 50%;
+  background: var(--dash-panel);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 4px solid #fff;
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.15);
+}
+
+.profile-header__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-header__avatar-initials {
+  font-size: clamp(34px, 5vw, 46px);
+  font-weight: 800;
+  color: #f4f4f4;
+  letter-spacing: 0.04em;
+}
+
+.profile-header__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-header__name {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 900;
+  color: #050505;
+  letter-spacing: -0.025em;
+}
+
+.profile-header__subtitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+}
+
+.profile-header__meta {
+  margin: 4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2c;
+}
+
+.profile-header__meta-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.profile-header__bio {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #1f1f1f;
+  max-width: 60ch;
+}
+
+.profile-stats {
+  display: flex;
+  gap: clamp(16px, 3vw, 32px);
+  margin-top: 14px;
+  padding: 12px 0;
+  border-top: 1px solid rgb(0 0 0 / 0.1);
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 60px;
+}
+
+.profile-stat__value {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0a0a0a;
+  line-height: 1.1;
+}
+
+.profile-stat__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #555;
+  margin-top: 2px;
+}
+
+.profile-header__actions {
+  margin-top: 14px;
+}
+
+.profile-header__edit {
+  width: auto;
+  margin: 0;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.profile-posts {
+  padding: clamp(20px, 3vw, 28px);
+  border-radius: 20px;
+  background: var(--dash-feed-panel);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 10px 32px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-posts__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+  padding-bottom: 10px;
+}
+
+.profile-posts__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #050505;
+  letter-spacing: -0.02em;
+}
+
+.profile-posts__count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.04em;
+}
+
+.profile-post-tag {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--dash-accent);
+}
+
+.profile-post-tag--general {
+  background: #4a5568;
+}
+
+.profile-post-tag--announcement {
+  background: var(--dash-accent);
+}
+
+.profile-post-tag--event {
+  background: #2f7d4a;
+}
+
+@media (max-width: 640px) {
+  .profile-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .profile-header__avatar {
+    margin: 0 auto;
+  }
+
+  .profile-header__identity {
+    align-items: center;
+  }
+
+  .profile-header__bio {
+    margin-inline: auto;
+  }
+
+  .profile-stats {
+    justify-content: center;
+  }
+
+  .profile-stat {
+    align-items: center;
+  }
+}
+/* ─── Comment Section Styles (Instagram/Dark Academia Vibe) ─── */
+
+.comment-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0; /* Soft line separating post from comments */
+}
+
+.comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Space between comments */
+}
+
+.comment-status {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Individual Comment Row */
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* FIX: The Tiny Circle Avatar */
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
+}
+
+/* FIX: Inline Username and Text */
+.comment-body {
+  flex: 1;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.3;
+}
+
+.comment-text-wrapper {
+  margin: 0;
+}
+
+.comment-author {
+  font-weight: 700;
+  color: #0f172a; /* Dark text for readability */
+  margin-right: 0.4rem; /* Space between name and comment */
+}
+
+.comment-text {
+  color: #334155;
+  word-break: break-word;
+}
+
+/* Tiny Meta Row */
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.comment-reply-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.comment-reply-btn:hover {
+  color: #64748b;
+}
+
+/* Sticky Input Form */
+.comment-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px; /* Pill shape */
+  padding: 0.5rem 1rem;
+}
+
+.comment-form:focus-within {
+  border-color: #cbd5e1;
+}
+
+.comment-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.comment-submit {
+  font-weight: 700;
+  color: #2563eb; /* Blue action text */
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.comment-submit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+/* ─── Post Category Tags ─── */
+
+.post-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px; /* Pill shape */
+  border: 1px solid;
+}
+
+/* Neutral/Standard style for General */
+.post-tag--general {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+/* Accent color for Events */
+.post-tag--event {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+/* Alert/Notice color for Announcements */
+.post-tag--announcement {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+/* ─── Event Card (Clean + Minimal) ─── */
+
+.post-event {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  background: #e7e7e7; /* matches your feed panel tones */
+  border: 1px solid rgb(0 0 0 / 0.08);
+
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 1px 4px rgb(0 0 0 / 0.08);
+}
+
+.post-event__title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #111; /* FIX: no more white-on-white */
+  letter-spacing: -0.01em;
+}
+
+.post-event__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #444;
+}
+
+.post-event__icon {
+  font-size: 13px;
+  opacity: 0.75;
+}

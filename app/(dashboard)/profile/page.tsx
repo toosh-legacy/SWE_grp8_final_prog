@@ -1,10 +1,5 @@
-import DashboardPlaceholder from '@/components/DashboardPlaceholder';
+import ProfileView from '@/components/ProfileView';
 
 export default function ProfilePage() {
-  return (
-    <DashboardPlaceholder
-      title="Profile"
-      description="Your profile settings and bio will live here."
-    />
-  );
+  return <ProfileView />;
 }

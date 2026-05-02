@@ -17,26 +17,45 @@ export interface Student {
 }
 
 // ─── Feed Category (FR8a) ──────────────────────────────────────────────────────
-export type FeedCategory = 'general' | 'announcement' | 'event';
+export type FeedCategory = 'general' | 'announcement' | 'events';
 
 export const VALID_FEED_CATEGORIES: FeedCategory[] = [
   'general',
   'announcement',
-  'event',
+  'events',
 ];
 
-// ─── Post (DCD: Post class) ────────────────────────────────────────────────────
+// ─── Comment (Domain Model: Comment class) ────────────────────────────────────
+export interface Comment {
+  commentId: string;
+  postId: string;
+  authorId: string;
+  authorName: string;       // ADDED
+  authorPFP: string | null; // ADDED
+  content: string;
+  createdAt: string;
+}
+
+// ─── Post & Metadata ──────────────────────────────────────────────────────────
+export interface PostMetadata {
+  title?: string;
+  location?: string;
+  eventDate?: string;
+  maxAttendees?: number | null;
+}
+
 export interface Post {
   postId: string;
   authorId: string;
-  content: string;        // max 250 chars (FR8)
+  authorName: string;
+  authorPFP: string | null;
+  content: string;
   mediaUrl: string | null;
   type: FeedCategory;
-  createdAt: string;      // ISO 8601 DateTime
-  /** Set when loading the feed for the current viewer */
-  likeCount?: number;
-  /** Whether the current viewer has liked this post */
-  likedByMe?: boolean;
+  createdAt: string;      
+  likeCount?: number;       // From withLikeSummaries
+  likedByMe?: boolean;      // From withLikeSummaries
+  metadata?: PostMetadata;  // From JSONB
 }
 
 // ─── Comment (Domain Model: Comment class) ────────────────────────────────────
@@ -75,4 +94,24 @@ export interface Connection {
   receiverId: string;
   status: 'pending' | 'accepted' | 'declined';
   createdAt: string;
+}
+
+export interface PostMetadata {
+  title?: string;
+  location?: string;
+  eventDate?: string;
+  maxAttendees?: number | null;
+}
+
+// Add metadata to your existing Post interface
+export interface Post {
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorPFP: string | null;
+  content: string;
+  mediaUrl: string | null;
+  type: FeedCategory;
+  createdAt: string;
+  metadata?: PostMetadata; // <--- ADD THIS
 }
